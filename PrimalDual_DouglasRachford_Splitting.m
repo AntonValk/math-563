@@ -1,4 +1,4 @@
-function  PrimalDual_DouglasRachford_Splitting(b, t, rho)
+function  xSol=PrimalDual_DouglasRachford_Splitting(b, t, rho)
 [numRows, numCols]=size(b);
 p = zeros(numRows, numCols);
 q1 = zeros(numRows, numCols);  % q1 is for l1/l2^2norm
@@ -52,7 +52,7 @@ for k = 1:500
     y1 = l1Prox(q1,t);
     y2 = isoProx(w,t);
     y = [y1;y2(:,:,1);y2(:,:,2)];   %y is 3n by n matrix
-    z = [q1;q2:q3]-y;   %z is 3n by n matrix
+    z = [q1;q2;q3]-y;   %z is 3n by n matrix
     inverse = invertMatrix(eye(numRows^2));
     iTA = [eye(numRows^2);t*applyK(eye(numRows^2));t*applyD1(eye(numRows^2));t*applyD2(eye(numRows^2))];
     iTATrans = [eye(numRows^2),-t*applyKTrans(eye(numRows^2)),-t*applyD1Trans(eye(numRows^2));-t*applyD2Trans(eye(numRows^2))];
