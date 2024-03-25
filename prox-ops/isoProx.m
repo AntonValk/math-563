@@ -43,5 +43,6 @@ function P = isoProx(w, g)
     x = w(:,:,1);
     y = w(:,:,2);
 
-    P = max(cat(3, zeros(n), sign(sqrt(x.^2 + y.^2) - g)), [], 3)*(1 - g./sqrt(x.^2 + y.^2)).*w;
+    %P = max(cat(3, zeros(n), sign(sqrt(x.^2 + y.^2) - g)), [], 3)*(1 - g./sqrt(x.^2 + y.^2)).*w;
+    P = max(cat(3, zeros(n), 1 - g./sqrt(x.^2 + y.^2)), [], 3).*w; % Should be equivalent to above, but without the NaN bug, please check
 end
