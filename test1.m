@@ -1,3 +1,5 @@
+clear; clc; close all;
+
 I = imread('cameraman.jpg');
 I = rgb2gray(I);   %black and white
 I = double(I(:, :, 1));
@@ -7,10 +9,15 @@ mx = max(I(:));
 I = I/mx;
 figure('Name','image before blurring')
 imshow(I,[])
-kernel = fspecial('gaussian', [15,15], 5);
+kernel = fspecial('gaussian', [5,5], 5);
 b = imfilter(I,kernel);
-noiseDensity=0.5;
+noiseDensity=0.25;
 b = imnoise(b,'salt & pepper',noiseDensity); 
 figure('Name','image after blurring')
 imshow(b,[]);
-Primal_DouglasRachford_Splitting(b, 1, 0.5);
+
+%im_clean = Primal_DouglasRachford_Splitting(b, kernel, 0.01, 1);
+im_clean = PrimalDual_DouglasRachford_Splitting(b, kernel, 0.01, 1);
+
+figure('Name', 'Image after de-blurring');
+imshow(im_clean, []);
