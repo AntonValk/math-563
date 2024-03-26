@@ -1,4 +1,4 @@
-function xSol = Primal_DouglasRachford_Splitting(b, kernel, t, rho)
+function xSol = Primal_DouglasRachford_Splitting(b, kernel, t, rho, g)
 [numRows, numCols]=size(b);
 % z1 = zeros(numRows, numCols);   %z1 is for boxProx
 % z21 = zeros(numRows, numCols);  % z21 is for l1/l2^2norm
@@ -56,7 +56,7 @@ for k = 1:5 %%TODO: Better stopping condition lol <- The paper suggests a stoppi
     % Compute prox ops
     x = boxProx(z1);
     y1 = l1Prox(z21 - b, t) + b; % From Equation 8 in the reference
-    y2 = isoProx(z22, t);
+    y2 = isoProx(z22, t*g);
 
     % Compute resolvent of B
     appK = applyKTrans(2*y1 - z21); % Compute the K component of the multiplication
