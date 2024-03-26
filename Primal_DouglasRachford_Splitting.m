@@ -1,4 +1,4 @@
-function xSol = Primal_DouglasRachford_Splitting(b, kernel, t, rho, g)
+function xSol = Primal_DouglasRachford_Splitting(b, kernel, t, rho, g, k_max)
 [numRows, numCols]=size(b);
 % z1 = zeros(numRows, numCols);   %z1 is for boxProx
 % z21 = zeros(numRows, numCols);  % z21 is for l1/l2^2norm
@@ -48,7 +48,7 @@ invertMatrix = @(x) ifft2(fft2(x)./eigValsMat);
 z1 = zeros(numRows, numCols);
 z2 = [applyK(z1); applyD1(z1); applyD2(z1)];
 
-for k = 1:5 %%TODO: Better stopping condition lol <- The paper suggests a stopping condition on the norm of the resolvents acting on x (pg5)
+for k = 1:k_max %%TODO: Better stopping condition lol <- The paper suggests a stopping condition on the norm of the resolvents acting on x (pg5)
     % Split z2 up
     z21 = z2(1:numRows, :);
     z22 = cat(3, z2((numRows + 1):2*numRows, :), z2((2*numRows + 1):end, :)); % Change z2 from 2D (2n*n)->3D (n*n*2)
