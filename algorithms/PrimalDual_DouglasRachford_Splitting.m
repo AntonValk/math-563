@@ -55,9 +55,9 @@ for k = 1:k_max
     zk = [q1; q2(:, :, 1); q2(:, :, 2)] - [z1; z2(:, :, 1); z2(:, :, 2)];
 
     % Compute Resolvent of B (pg 7 in reference) <- TODO: Double check
-    inverse = invertMatrix(ones(numRows, 1)); % inverse(I + t^2A'A)
+    inverse = invertMatrix(eye(numRows)); % inverse(I + t^2A'A)
     iTA = [eye(numRows); t*applyK(eye(numRows)); t*applyD1(eye(numRows)); t*applyD2(eye(numRows))]; % [I; tA]
-    iTATrans = [eye(numRows); -t*applyK(eye(numRows)); -t*applyD1(eye(numRows)); -t*applyD2(eye(numRows))]'; % [I, -tA']
+    iTATrans = [eye(numRows), -t*applyKTrans(eye(numRows)), -t*applyD1Trans(eye(numRows)), -t*applyD2Trans(eye(numRows))]; % [I, -tA']
     bigProd = iTA*inverse*iTATrans; % Combine above
 
     blockWithId = [zeros(3*numRows, 4*numRows); zeros(numRows, 3*numRows), eye(numRows)]; % <- Also not confident that the dimensions on this are right!
