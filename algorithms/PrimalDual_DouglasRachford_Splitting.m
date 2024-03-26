@@ -1,4 +1,4 @@
-function  xSol=PrimalDual_DouglasRachford_Splitting(b, kernel, t, rho)
+function  xSol=PrimalDual_DouglasRachford_Splitting(b, kernel, t, rho, g, k_max)
 [numRows, numCols]=size(b);
 
 %computes the numRow x numCol matrix of the eigenvalues for K and D1 and
@@ -43,33 +43,36 @@ invertMatrix = @(x) ifft2(fft2(x)./eigValsMat);
 pk = zeros(numRows, numCols); % n x n matrix
 qk= zeros(3*numRows, numCols);  % 3n x n matrix
 
-for k = 1:500
+for k = 1:k_max
     % Extract elements
     q1 = qk(1:numRows, :);
     q2 = cat(3, qk((numRows + 1):2*numRows, :), qk((2*numRows + 1):end, :)); % Change q from 2D (2n*n)->3D (n*n*2)
 
     % Compute Prox Ops
-    xk = boxProx(pk,t);   %x is n by n matrix
+    xk = boxProx(pk);   %x is n by n matrix
     z1 = l1Prox(q1 - b, t) + b; % Equation 8 in reference
-    z2 = isoProx(q2, t);
+    z2 = isoProx(q2, t*g);
     zk = [q1; q2(:, :, 1); q2(:, :, 2)] - [z1; z2(:, :, 1); z2(:, :, 2)];
 
-    % Compute Resolvent of B
-    inverse = invertMatrix(eye(numRows));
-    iTA = [eye(numRows);t*applyK(eye(numRows));t*applyD1(eye(numRows));t*applyD2(eye(numRows))];
-    iTATrans = [eye(numRows),-t*applyKTrans(eye(numRows)),-t*applyD1Trans(eye(numRows));-t*applyD2Trans(eye(numRows))];
-    bigProd = iTA.*inverse.*iTATrans;
-    blockWithId = [zeros(2*numRows),zeros(2*numRows);zeros(2*numRows),eye(2*numRows)];
-    bigSum = blockWithId+bigProd;
-    aux = [2*xk - pk; 2*zk - qk];
-    res = bigSum .* aux(:);
+    % Compute Resolvent of B (pg 7 in reference) <- TODO: Double check
+    inverse = invertMatrix(ones(numRows, 1)); % inverse(I + t^2A'A)
+    iTA = [eye(numRows); t*applyK(eye(numRows)); t*applyD1(eye(numRows)); t*applyD2(eye(numRows))]; % [I; tA]
+    iTATrans = [eye(numRows); -t*applyK(eye(numRows)); -t*applyD1(eye(numRows)); -t*applyD2(eye(numRows))]'; % [I, -tA']
+    bigProd = iTA*inverse*iTATrans; % Combine above
+
+    blockWithId = [zeros(3*numRows, 4*numRows); zeros(numRows, 3*numRows), eye(numRows)]; % <- Also not confident that the dimensions on this are right!
+    %blockWithId = [zeros(2*numRows), zeros(2*numRows); zeros(2*numRows), eye(2*numRows)];
+
+    res_b = blockWithId + bigProd; % Compile resolvent
+
+    res_b_z = res_b*[2*xk - pk; 2*zk - qk]; % Compute the vector satisfing 0 in res_b
     
-    wk = reshape(res(1:numRows,:),numRows,numCols);
-    vk = reshape(res(numRows+1:end,:),3*numRows, numCols);
+    wk = res_b_z(1:numRows, :); % In n x n
+    vk = res_b_z((numRows + 1):end, :); % In 3n x n
 
     % Perform update
     pk = pk + rho*(wk - xk); % n x n matrix
     qk = qk + rho*(vk - zk); % 3n x n matrix
 end
-xSol = boxProx(pk,t);
+xSol = boxProx(pk);
 end

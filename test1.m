@@ -16,8 +16,8 @@ b = imnoise(b, 'salt & pepper', noiseDensity);
 figure('Name','image after blurring')
 imshow(b,[]);
 
-im_clean = Primal_DouglasRachford_Splitting(b, kernel, 1, 0.5, 0.05, 500);
-%im_clean = PrimalDual_DouglasRachford_Splitting(b, kernel, 0.01, 1);
+%im_clean = Primal_DouglasRachford_Splitting(b, kernel, 1, 0.5, 0.05, 250);
+im_clean = PrimalDual_DouglasRachford_Splitting(b, kernel, 1, 0.05, 0.25, 15);
 
 figure('Name', 'Image after de-blurring');
 imshow(im_clean, []);
