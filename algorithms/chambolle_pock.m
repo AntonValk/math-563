@@ -55,8 +55,8 @@ for k = 1:k_max
     vk = xk - t*(applyKTrans(yk(:, :, 1)) + applyD1Trans(yk(:, :, 2)) + applyD2Trans(yk(:, :, 3))); % Input to prox of f
 
     % Prox of sg*
-    yk1 = wk(:, :, 1) - l1Prox(wk(:, :, 1) - b, s) - b; % Part one of prox of sg*
-    yk2 = wk(:, :, 2:3) - isoProx(wk(:, :, 2:3), s*g); % Part two of prox of sg*
+    yk1 = wk(:, :, 1) - s*l1Prox(wk(:, :, 1)/s - b, 1/s) - b; % Part one of prox of sg*
+    yk2 = wk(:, :, 2:3) - s*isoProx(wk(:, :, 2:3)/s, g/s); % Part two of prox of sg*
     yk = [yk1; yk2(:, :, 1); yk2(:, :, 2)]; % Compile components of prox of sg*
 
     % Prox of tf

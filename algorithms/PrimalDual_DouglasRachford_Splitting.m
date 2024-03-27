@@ -41,32 +41,41 @@ invertMatrix = @(x) ifft2(fft2(x)./eigValsMat);
 
 % Initialize
 pk = zeros(numRows, numCols); % n x n matrix
-qk= zeros(3*numRows, numCols);  % 3n x n matrix
+%pk = b;
+qk = [applyK(pk); applyD1(pk); applyD2(pk)]; % 3n x n matrix
 
 for k = 1:k_max
     % Extract elements
-    q1 = qk(1:numRows, :);
-    q2 = cat(3, qk((numRows + 1):2*numRows, :), qk((2*numRows + 1):end, :)); % Change q from 2D (2n*n)->3D (n*n*2)
+    q = reshape(qk, [numRows, numCols, 3]); % Convert qk to a 3D tensor
 
     % Compute Prox Ops
     xk = boxProx(pk);   %x is n by n matrix
-    z1 = l1Prox(q1 - b, t) + b; % Equation 8 in reference
-    z2 = isoProx(q2, t*g);
-    zk = [q1; q2(:, :, 1); q2(:, :, 2)] - [z1; z2(:, :, 1); z2(:, :, 2)];
+    z1 = q(:, :, 1) - t*l1Prox(q(:, :, 1)/t - b, 1/t) - b; % Equation 8 in reference
+    z2 = q(:, :, 2:3) - t*isoProx(q(:, :, 2:3)/t, g/t);
+    zk = [z1; z2(:, :, 1); z2(:, :, 2)];
 
     % Compute Resolvent of B (pg 7 in reference) <- TODO: Double check
+%     vec0  =[2*xk - pk; 2*zk - qk];
+%     vec = reshape(vec0, [numRows, numCols, 4]); % Extract matrices corresponding to n x n blocks
+%     
+%     a = (vec(:, :, 1)) - t*applyKTrans(vec(:, :, 2)) - t*applyD1Trans(vec(:, :, 3)) - t*applyD2Trans(vec(:, :, 4)); % [I, -tA']*vec
+%     b = invertMatrix(a); % (I + t^2A^TA)^-1 * [I, -tA']*vec
+%     c = [eye(numRows)*b; t*applyK(b); t*applyD1(b); t*applyD2(b)]; % [I; tA]*(I + t^2A^TA)^-1 * [I, -tA']*vec
+    
+%     res_b_z = [zeros(3*numRows, 4*numRows); zeros(numRows, 3*numRows), eye(numRows)]*vec0 + c;
+%    res_b_z = [zeros(numRows, 4*numCols); zeros(3*numRows, numCols), eye(3*numRows)]*vec0 + c;
+
     inverse = invertMatrix(eye(numRows)); % inverse(I + t^2A'A)
     iTA = [eye(numRows); t*applyK(eye(numRows)); t*applyD1(eye(numRows)); t*applyD2(eye(numRows))]; % [I; tA]
     iTATrans = [eye(numRows), -t*applyKTrans(eye(numRows)), -t*applyD1Trans(eye(numRows)), -t*applyD2Trans(eye(numRows))]; % [I, -tA']
     bigProd = iTA*inverse*iTATrans; % Combine above
 
     blockWithId = [zeros(3*numRows, 4*numRows); zeros(numRows, 3*numRows), eye(numRows)]; % <- Also not confident that the dimensions on this are right!
-    %blockWithId = [zeros(2*numRows), zeros(2*numRows); zeros(2*numRows), eye(2*numRows)];
 
     res_b = blockWithId + bigProd; % Compile resolvent
 
     res_b_z = res_b*[2*xk - pk; 2*zk - qk]; % Compute the vector satisfing 0 in res_b
-    
+     
     wk = res_b_z(1:numRows, :); % In n x n
     vk = res_b_z((numRows + 1):end, :); % In 3n x n
 
