@@ -49,9 +49,9 @@ for k = 1:k_max
 
     % Compute Prox Ops
     wk = yk + s*[applyK(zk); applyD1(zk); applyD2(zk)]; % Input to prox of g
-    wk = reshape(wk, [numRows, numCols, 3]);
+    wk = mat_split(wk, 3); % Convert from 2D -> 3D tensor
     
-    yk = reshape(yk, [numRows, numCols, 3]);
+    yk = mat_split(yk, 3); % Convert from 2D -> 3D tensor
     vk = xk - t*(applyKTrans(yk(:, :, 1)) + applyD1Trans(yk(:, :, 2)) + applyD2Trans(yk(:, :, 3))); % Input to prox of f
 
     % Prox of sg*

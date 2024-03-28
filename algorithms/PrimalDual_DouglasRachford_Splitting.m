@@ -45,8 +45,7 @@ pk = zeros(numRows, numCols); % n x n matrix
 qk = [applyK(pk); applyD1(pk); applyD2(pk)]; % 3n x n matrix
 
 for k = 1:k_max
-    % Extract elements
-    q = reshape(qk, [numRows, numCols, 3]); % Convert qk to a 3D tensor
+    q = mat_split(qk, 3); % Convert qk to a 3D tensor
 
     % Compute Prox Ops
     xk = boxProx(pk);   %x is n by n matrix
