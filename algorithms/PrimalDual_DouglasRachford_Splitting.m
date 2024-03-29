@@ -50,33 +50,35 @@ for k = 1:k_max
     % Compute Prox Ops
     xk = boxProx(pk);   %x is n by n matrix
     z1 = q(:, :, 1) - t*l1Prox(q(:, :, 1)/t - b, 1/t) - b; % Equation 8 in reference
-    z2 = q(:, :, 2:3) - t*isoProx(q(:, :, 2:3)/t, g/t);
+    z2 = q(:, :, 2:3) - t*isoProx(q(:, :, 2:3)/t, g/t); % Why using g
+    z21 = z2(:,:,1);
+    z22 = z2(:,:,2);
     zk = [z1; z2(:, :, 1); z2(:, :, 2)];
 
     % Compute Resolvent of B (pg 7 in reference) <- TODO: Double check
-%     vec0  =[2*xk - pk; 2*zk - qk];
-%     vec = reshape(vec0, [numRows, numCols, 4]); % Extract matrices corresponding to n x n blocks
-%     
-%     a = (vec(:, :, 1)) - t*applyKTrans(vec(:, :, 2)) - t*applyD1Trans(vec(:, :, 3)) - t*applyD2Trans(vec(:, :, 4)); % [I, -tA']*vec
-%     b = invertMatrix(a); % (I + t^2A^TA)^-1 * [I, -tA']*vec
-%     c = [eye(numRows)*b; t*applyK(b); t*applyD1(b); t*applyD2(b)]; % [I; tA]*(I + t^2A^TA)^-1 * [I, -tA']*vec
+     vec0  =[2*xk - pk; 2*z1 - q(:,:,1);2*z21-q(:,:,2);2*z22-q(:,:,3)];
+     vec = reshape(vec0, [numRows, numCols, 4]); % Extract matrices corresponding to n x n blocks
+     
+     a = (vec(:, :, 1)) - t*applyKTrans(vec(:, :, 2)) - t*applyD1Trans(vec(:, :, 3)) - t*applyD2Trans(vec(:, :, 4)); % [I, -tA']*vec
+     b = invertMatrix(a); % (I + t^2A^TA)^-1 * [I, -tA']*vec
+     c = [eye(numRows)*b; t*applyK(b); t*applyD1(b); t*applyD2(b)]; % [I; tA]*(I + t^2A^TA)^-1 * [I, -tA']*vec
     
-%     res_b_z = [zeros(3*numRows, 4*numRows); zeros(numRows, 3*numRows), eye(numRows)]*vec0 + c;
+     res = [zeros(numRows,numCols); vec(:, :, 2); vec(:, :, 3); vec(:, :, 4)] + c;
 %    res_b_z = [zeros(numRows, 4*numCols); zeros(3*numRows, numCols), eye(3*numRows)]*vec0 + c;
 
-    inverse = invertMatrix(eye(numRows)); % inverse(I + t^2A'A)
-    iTA = [eye(numRows); t*applyK(eye(numRows)); t*applyD1(eye(numRows)); t*applyD2(eye(numRows))]; % [I; tA]
-    iTATrans = [eye(numRows), -t*applyKTrans(eye(numRows)), -t*applyD1Trans(eye(numRows)), -t*applyD2Trans(eye(numRows))]; % [I, -tA']
-    bigProd = iTA*inverse*iTATrans; % Combine above
+%    inverse = invertMatrix(eye(numRows)); % inverse(I + t^2A'A)
+%    iTA = [eye(numRows); t*applyK(eye(numRows)); t*applyD1(eye(numRows)); t*applyD2(eye(numRows))]; % [I; tA]
+%    iTATrans = [eye(numRows), -t*applyKTrans(eye(numRows)), -t*applyD1Trans(eye(numRows)), -t*applyD2Trans(eye(numRows))]; % [I, -tA']
+%    bigProd = iTA*inverse*iTATrans; % Combine above
 
-    blockWithId = [zeros(3*numRows, 4*numRows); zeros(numRows, 3*numRows), eye(numRows)]; % <- Also not confident that the dimensions on this are right!
+%    blockWithId = [zeros(3*numRows, 4*numRows); zeros(numRows, 3*numRows), eye(numRows)]; % <- Also not confident that the dimensions on this are right!
 
-    res_b = blockWithId + bigProd; % Compile resolvent
+%    res_b = blockWithId + bigProd; % Compile resolvent
 
-    res_b_z = res_b*[2*xk - pk; 2*zk - qk]; % Compute the vector satisfing 0 in res_b
+%    res_b_z = res_b*[2*xk - pk; 2*zk - qk]; % Compute the vector satisfing 0 in res_b
      
-    wk = res_b_z(1:numRows, :); % In n x n
-    vk = res_b_z((numRows + 1):end, :); % In 3n x n
+    wk = res(1:numRows, :); % In n x n
+    vk = res((numRows + 1):end, :); % In 3n x n
 
     % Perform update
     pk = pk + rho*(wk - xk); % n x n matrix
