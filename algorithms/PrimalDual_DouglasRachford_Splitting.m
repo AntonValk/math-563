@@ -50,14 +50,14 @@ for k = 1:k_max
     % Compute Prox Ops
     xk = boxProx(pk);   %x is n by n matrix
     z1 = q(:, :, 1) - t*l1Prox(q(:, :, 1)/t - b, 1/t) - b; % Equation 8 in reference
-    z2 = q(:, :, 2:3) - t*isoProx(q(:, :, 2:3)/t, g/t); % Why using g
+    z2 = q(:, :, 2:3) - (t*g)*isoProx(q(:, :, 2:3)/(t*g), 1/(t*g)); % Why using g
     z21 = z2(:,:,1);
     z22 = z2(:,:,2);
     zk = [z1; z2(:, :, 1); z2(:, :, 2)];
 
     % Compute Resolvent of B (pg 7 in reference) <- TODO: Double check
-     vec0  =[2*xk - pk; 2*z1 - q(:,:,1);2*z21-q(:,:,2);2*z22-q(:,:,3)];
-     vec = reshape(vec0, [numRows, numCols, 4]); % Extract matrices corresponding to n x n blocks
+     vec0  =[2*xk - pk; 2*z1 - q(:,:,1); 2*z21-q(:,:,2);2*z22-q(:,:,3)];
+     vec = mat_split(vec0, 4); % Extract matrices corresponding to n x n blocks
      
      a = (vec(:, :, 1)) - t*applyKTrans(vec(:, :, 2)) - t*applyD1Trans(vec(:, :, 3)) - t*applyD2Trans(vec(:, :, 4)); % [I, -tA']*vec
      b = invertMatrix(a); % (I + t^2A^TA)^-1 * [I, -tA']*vec
