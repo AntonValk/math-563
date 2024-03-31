@@ -40,7 +40,7 @@ eigValsMat = ones(numRows, numCols) + t*t*eigArry_KTrans.*eigArry_K + t*t*eigArr
 invertMatrix = @(x) ifft2(fft2(x)./eigValsMat);
 
 % Initialize
-xk = 0.1 + zeros(numRows, numCols); % n x n matrix
+xk = zeros(numRows, numCols); % n x n matrix
 zk = zeros(numRows, numCols); % n x n matrix
 yk = [applyK(xk); applyD1(xk); applyD2(xk)]; % 3n x n matrix
 
