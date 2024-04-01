@@ -1,4 +1,4 @@
-function xSol = ADMM(b, kernel, t, rho, g, k_max)
+function xSol = admm(b, kernel, t, rho, g, k_max)
 [numRows, numCols]=size(b);
 % z1 = zeros(numRows, numCols);   %z1 is for boxProx
 % z21 = zeros(numRows, numCols);  % z21 is for l1/l2^2norm

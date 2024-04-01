@@ -1,4 +1,4 @@
-function xSol = Primal_DouglasRachford_Splitting(b, kernel, t, rho, g, k_max)
+function xSol = primal_douglasrachford_splitting(b, kernel, t, rho, g, k_max)
 [numRows, numCols]=size(b);
 % z1 = zeros(numRows, numCols);   %z1 is for boxProx
 % z21 = zeros(numRows, numCols);  % z21 is for l1/l2^2norm

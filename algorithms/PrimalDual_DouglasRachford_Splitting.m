@@ -1,4 +1,4 @@
-function  xSol=PrimalDual_DouglasRachford_Splitting(b, kernel, t, rho, g, k_max)
+function  xSol=primaldual_douglasrachford_splitting(b, kernel, t, rho, g, k_max)
 [numRows, numCols]=size(b);
 
 %computes the numRow x numCol matrix of the eigenvalues for K and D1 and
