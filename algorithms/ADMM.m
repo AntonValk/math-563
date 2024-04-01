@@ -48,12 +48,12 @@ invertMatrix = @(x) ifft2(fft2(x)./eigValsMat);
 xk = zeros(numRows, numCols); %xk, uk, wk are n by n matrices
 uk = zeros(numRows, numCols);
 wk = zeros(numRows, numCols);
-y1 = zeros(numRows, numCols);%yk,zk are 3n by n matrices
-y2 = zeros(numRows, numCols);
-y3 = zeros(numRows, numCols);
-z1 = zeros(numRows, numCols);
-z2 = zeros(numRows, numCols);
-z3 = zeros(numRows, numCols);
+y1 = applyK(xk);  %yk, zk are 3n by n matrices
+y2 = applyD1(xk);
+y3 = applyD2(xk);
+z1 = applyK(xk);
+z2 = applyD1(xk);
+z3 = applyD2(xk);
 
 
 for k = 1:k_max %%TODO: Better stopping condition lol <- The paper suggests a stopping condition on the norm of the resolvents acting on x (pg5)
@@ -70,8 +70,8 @@ for k = 1:k_max %%TODO: Better stopping condition lol <- The paper suggests a st
     yk = mat_split([y1; y2; y3], 3);
     zk = mat_split([z1; z2; z3], 3);
     % unsure about the +/-b and */t for the two prox operators.
-    y1 = l1Prox(t*(rho* w(:,:,1) + (1-rho)*y1+z1/t)+b,t)/t-b; % From Equation 8 in the reference 
-    y_aux = isoProx(rho*w(:,:,2:3) + (1-rho)*yk(:,:,2:3) + zk(:,:,2:3)/t, g*t)/t;
+    y1 = l1Prox(rho* w(:,:,1) + (1-rho)*y1+z1/t-b,1/t)+b; % From Equation 8 in the reference 
+    y_aux = isoProx(rho*w(:,:,2:3) + (1-rho)*yk(:,:,2:3) + zk(:,:,2:3)/t, g/t);
     %yk = [y1; y_aux(:,:,1); y_aux(:,:,2)];
     
     % Compute Updates
