@@ -13,11 +13,11 @@
 
 function varargout = imopt(b, kernel, alg, p_in)
     in_names = ["b", "kernel", "alg", "p_in"]; % List of names of inputs
-    input_types = ["numeric", "numeric", "string", "struct"]; % List of allowed types for inputs
+    input_types = ["numeric", "numeric", "char", "struct"]; % List of allowed types for inputs
 
     fields_allowed = ["verbose", "display", "save_iters", "max_iter", "e_t", ...
         "e_meas", "regularization", "t", "s", "gamma", "rho"]; % List of all legal field names for the parameter structure
-    fields_type = ["logical", "logical", "logical", "integer", "numeric", ...
+    fields_type = ["logical", "logical", "logical", "numeric", "numeric", ...
         "char", "char", "numeric", "numeric", "numeric", "numeric"]; % List of types for all fields
     
     %% TODO: Add input parsing -> Make sure inputs are of the correct type
@@ -27,19 +27,20 @@ function varargout = imopt(b, kernel, alg, p_in)
         case 1
             disp("Error in imopt: Error in function call, too few input arguments.");
         case 2
-            argin = cells(1, nargin);
+            argin = cell(1, nargin);
             argin{1} = b;
             argin{2} = kernel;
             alg = 'primal_dr'; % Assign default algorithm
         case 3
-            argin = cells(1, nargin);
+            argin = cell(1, nargin);
             argin{1} = b;
             argin{2} = kernel;
             argin{3} = alg;
         case 4
-            argin = cells(1, nargin);
+            argin = cell(1, nargin);
             argin{1} = b;
             argin{2} = kernel;
+            argin{3} = alg;
             argin{4} = p_in;
         otherwise
             disp("Error in imopt: Error in function call, too many input arguments.");
@@ -50,13 +51,14 @@ function varargout = imopt(b, kernel, alg, p_in)
         if ~isa(argin{i}, input_types(i)) % Display error message and exit if type is incorrect
             disp("Error in imopt: Unexpected type for parameter '" + in_names(i) + ...
                 "'. Expected a " + input_types(i) + " but got a " +class(argin{i}) + ".");
+            return
         end
     end
 
     % Evaluate input parameter structure
     params = get_default(alg);
 
-    if exists(p_in) % If custom parameters were passed overwrite default values
+    if exist('p_in') % If custom parameters were passed overwrite default values
         names = fieldnames(p_in);
 
         for i=1:length(names) % Overwrite defaults if a legal field was passed
@@ -90,7 +92,7 @@ function varargout = imopt(b, kernel, alg, p_in)
     end
 
     % Build function handle for prox g
-    prox_g = @(x) prox_tg(x, params.t, params.gamma, params.regularization, b);
+    prox_g = @(x, t) prox_tg(x, t, params.gamma, params.regularization, b);
     
     %% TODO: Double check which variables are actually needed in the function
     %%       Address mycourses posts comment -> Should be easy with this implementation
@@ -99,14 +101,14 @@ function varargout = imopt(b, kernel, alg, p_in)
     % Build function handle for algorithm
     switch alg
         case 'primal_dr'
-            deblur = @(im)primal_douglasrachford_splitting(im, kernel, params.rho, params.max_iter, params.e_t);
+            deblur = @(im)primal_douglasrachford_splitting(im, kernel, prox_g, params.t, params.rho, params.max_iter, params.e_t);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Primal Douglas-Rachford Splitting";
         case 'primaldual_dr'
-            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.rho, params.max_iter, params.e_t);
+            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.t, params.rho, params.max_iter, params.e_t);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
@@ -150,12 +152,7 @@ function varargout = imopt(b, kernel, alg, p_in)
 
     % Print outputs
     if v
-        if D.success
-            disp("Deblurring algorithm completed successfully.");
-        else
-            disp("Deblurring algorithm failed.");
-        end
-
+        disp("Deblurring algorithm completed successfully.");
         disp("Total Time: " + num2str(D.t) + " s");
         disp("Total Iterations: " + num2str(D.k_end));
         disp("Final Error: " + num2str(D.e_end));
@@ -177,7 +174,7 @@ function varargout = imopt(b, kernel, alg, p_in)
     end
     
     % Compile outputs
-    varargout = cells(1, nargout);
+    varargout = cell(1, nargout);
 
     switch nargout % Create outputs and return
         case 1 % Return only the final image
