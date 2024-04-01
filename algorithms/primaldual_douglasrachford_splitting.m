@@ -1,88 +1,122 @@
-function  xSol=primaldual_douglasrachford_splitting(b, kernel, t, rho, g, k_max)
-[numRows, numCols]=size(b);
+% primaldual_douglasrachford_splitting
+%
+% Implements non-blind image deblurring using the primal-dual douglas rachford
+% method, as described in [1]. Stops when a specified error threshold is
+% met or when a maximum number of iterations have been carried out.
+%
+% Inputs:
+%   b: The blurred image. [m x n Matrix]
+%   kernel: The kernel used to blur the image. [k x k Matrix]
+%   x_init: The initial guess for the deblurred image. [m x n Matrix]
+%   prox_g: The proximal operator computation for g(x), the regularization
+%           terms. [Function Handle]
+%   t: Step size. [Double]
+%   g: The constant modifying the iso-norm in the problem statement. [Double]
+%   rho: Regularization parameter. [Double]
+%   k_max: Maximum number of iterations. [Integer]
+%   e_t: Error threshold. [Double]
+%   save: A boolean, indicating whether the image iterates should be saved. [Logical]
+%   verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
+%
+% Outputs:
+%   D: A structure containing the final image and algorithm metrics. [Struct]
+%       xf: The final image. [m x n Matrix]
+%       t: The time it took to run the optimization algorithm. [Double, Seconds]
+%       k_end: The number of iterations ran. [Integer]
+%       e_end: Error at the final iteration. [Double]
+%       ek: Error at each iteration [1 x k_end Matrix]
+%       xk: The image at each iteration [m x n x k_end Matrix] (Only output if save is true)
+%
+% Authors: Linda Hu, Cheng Shou, April Niu, Aidan Gerkis
+% Date: 23-03-2024
+%
+% References:
+%   [1]: C. Paquette, "MATH 463/563 - Convex Optimization, Project Description" 
+%        in MATH 564 - Honours Convex Optimization.
 
-%computes the numRow x numCol matrix of the eigenvalues for K and D1 and
-%D2; Here D1 = I oplus D1 in the paper and D2 = D1 oplus I.
-eigArry_K = eigValsForPeriodicConvOp(kernel, numRows, numCols);
-eigArry_D1 = eigValsForPeriodicConvOp([-1,1]', numRows, numCols);
-eigArry_D2 = eigValsForPeriodicConvOp([-1,1], numRows, numCols);
-
-%computes numRow x numCol matrix of the eigenvalues for K^T and D1^T and
-%D2^T;
-eigArry_KTrans = conj(eigArry_K);
-eigArry_D1Trans = conj(eigArry_D1);
-eigArry_D2Trans = conj(eigArry_D2);
-
-%Functions which compute Kx, D1x, D2x, Dxt, K^Tx, D1^Tx, D2^Tx, and D^Ty.
-%Note for all the x functions, the input x is in R^(m x n) and outputs into
-%R^(m x n) except for D which outputs into 2 concat. R^(m x n) matrices;
-%For D^Ty, y is two m x n matrices concatanated and outputs into R^(m x n)
-applyK = @(x) applyPeriodicConv2D(x, eigArry_K);
-applyD1 = @(x) applyPeriodicConv2D(x, eigArry_D1);
-applyD2 = @(x) applyPeriodicConv2D(x, eigArry_D2);
-
-applyKTrans = @(x) applyPeriodicConv2D(x, eigArry_KTrans);
-applyD1Trans = @(x) applyPeriodicConv2D(x, eigArry_D1Trans);
-applyD2Trans = @(x) applyPeriodicConv2D(x, eigArry_D2Trans);
-
-applyD = @(x) cat(3, applyD1(x), applyD2(x));
-
-applyDTrans = @(y) applyD1Trans(y(:,:,1)) + applyD2Trans(y(:, :, 2));
-
-% Function which computes the (I + K^TK + D^TD)x where x in R^(m x n)
-% matrix and the eigenvalues of I + t*t*K^TK + t*t*D^TD; here t is the
-% stepsizes
-applyMat = @(x) x + applyKTrans(applyK(x)) + applyDTrans(applyD(x));
-eigValsMat = ones(numRows, numCols) + t*t*eigArry_KTrans.*eigArry_K + t*t*eigArry_D1Trans.*eigArry_D1...
-    + t*t*eigArry_D2Trans.*eigArry_D2;
-
-%R^(m x n) Computing (I + K^T*K + D^T*D)^(-1)*x
-invertMatrix = @(x) ifft2(fft2(x)./eigValsMat);
-
-% Initialize
-pk = zeros(numRows, numCols); % n x n matrix
-%pk = b;
-qk = [applyK(pk); applyD1(pk); applyD2(pk)]; % 3n x n matrix
-
-for k = 1:k_max
-    q = mat_split(qk, 3); % Convert qk to a 3D tensor
-
-    % Compute Prox Ops
-    xk = boxProx(pk);   %x is n by n matrix
-    z1 = q(:, :, 1) - t*l1Prox(q(:, :, 1)/t - b, 1/t) - b; % Equation 8 in reference
-    z2 = q(:, :, 2:3) - (t*g)*isoProx(q(:, :, 2:3)/(t*g), 1/(t*g)); % Why using g
-    z21 = z2(:,:,1);
-    z22 = z2(:,:,2);
-    zk = [z1; z2(:, :, 1); z2(:, :, 2)];
-
-    % Compute Resolvent of B (pg 7 in reference) <- TODO: Double check
-     vec0  =[2*xk - pk; 2*z1 - q(:,:,1); 2*z21-q(:,:,2);2*z22-q(:,:,3)];
-     vec = mat_split(vec0, 4); % Extract matrices corresponding to n x n blocks
-     
-     a = (vec(:, :, 1)) - t*applyKTrans(vec(:, :, 2)) - t*applyD1Trans(vec(:, :, 3)) - t*applyD2Trans(vec(:, :, 4)); % [I, -tA']*vec
-     b = invertMatrix(a); % (I + t^2A^TA)^-1 * [I, -tA']*vec
-     c = [eye(numRows)*b; t*applyK(b); t*applyD1(b); t*applyD2(b)]; % [I; tA]*(I + t^2A^TA)^-1 * [I, -tA']*vec
+function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, prox_g, t, g, rho, k_max, e_t, save, verbose)
+    [numRows, numCols]=size(b);
     
-     res = [zeros(numRows,numCols); vec(:, :, 2); vec(:, :, 3); vec(:, :, 4)] + c;
-%    res_b_z = [zeros(numRows, 4*numCols); zeros(3*numRows, numCols), eye(3*numRows)]*vec0 + c;
-
-%    inverse = invertMatrix(eye(numRows)); % inverse(I + t^2A'A)
-%    iTA = [eye(numRows); t*applyK(eye(numRows)); t*applyD1(eye(numRows)); t*applyD2(eye(numRows))]; % [I; tA]
-%    iTATrans = [eye(numRows), -t*applyKTrans(eye(numRows)), -t*applyD1Trans(eye(numRows)), -t*applyD2Trans(eye(numRows))]; % [I, -tA']
-%    bigProd = iTA*inverse*iTATrans; % Combine above
-
-%    blockWithId = [zeros(3*numRows, 4*numRows); zeros(numRows, 3*numRows), eye(numRows)]; % <- Also not confident that the dimensions on this are right!
-
-%    res_b = blockWithId + bigProd; % Compile resolvent
-
-%    res_b_z = res_b*[2*xk - pk; 2*zk - qk]; % Compute the vector satisfing 0 in res_b
-     
-    wk = res(1:numRows, :); % In n x n
-    vk = res((numRows + 1):end, :); % In 3n x n
-
-    % Perform update
-    pk = pk + rho*(wk - xk); % n x n matrix
-    qk = qk + rho*(vk - zk); % 3n x n matrix
-end
-xSol = boxProx(pk);
+    % Arrays to store outputs
+    errors = zeros(1, k_max);
+    if save % Save images at each step only if requested
+        xks = zeros(numRows, numCols, k_max);
+    end
+    
+    % Initialize
+    pk = x_init; % n x n matrix
+    qk = [mat_mult(pk, 'K', kernel); mat_mult(pk, 'D1', kernel); mat_mult(pk, 'D2', kernel)]; % 3n x n matrix
+    
+    k = 1; % Current iteration
+    error = e_t*10; % Current error
+    
+    tic; % Start Timer
+    while error > e_t && k < k_max % Iterate until error convergence or max iterations has been exceeded
+        q = mat_split(qk, 3); % Convert qk to a 3D tensor
+        q_prox = q;
+        q_prox(:, :, 1) = q_prox(:, :, 1)/t;
+        q_prox(:, :, 2:3) = q_prox(:, :, 2:3)/(t*g);
+    
+        % Compute Prox Ops
+        xk = boxProx(pk);   %x is n by n matrix
+    
+        zk_conj = prox_g(q_prox, 1/t); % Prox op of g
+    
+        z1 = q(:, :, 1) - t*zk_conj(:, :, 1); % Prox op of g* (regularization part)
+        z2 = q(:, :, 2:3) - (t*g)*zk_conj(:, :, 2:3); % Prox op of g* (iso-norm part)
+    
+        %z1 = q(:, :, 1) - t*l1Prox(q(:, :, 1)/t - b, 1/t) - b; % Equation 8 in reference
+        %z2 = q(:, :, 2:3) - (t*g)*isoProx(q(:, :, 2:3)/(t*g), 1/(t*g)); % Why using g
+        z21 = z2(:,:,1);
+        z22 = z2(:,:,2);
+        zk = [z1; z2(:, :, 1); z2(:, :, 2)];
+    
+        % Compute Resolvent of B (pg 7 in reference) <- TODO: Double check
+        vec0  =[2*xk - pk; 2*z1 - q(:,:,1); 2*z21-q(:,:,2);2*z22-q(:,:,3)];
+        vec = mat_split(vec0, 4); % Extract matrices corresponding to n x n blocks
+    
+        a = (vec(:, :, 1)) - t*mat_mult(vec(:, :, 2), 'KT', kernel) - t*mat_mult(vec(:, :, 3), 'D1T', kernel) - t*mat_mult(vec(:, :, 4), 'D2T', kernel); % [I, -tA']*vec
+        b = mat_mult(a, 'inv', kernel, t); % (I + t^2A^TA)^-1 * [I, -tA']*vec
+        c = [eye(numRows)*b; t*mat_mult(b, 'K', kernel); t*mat_mult(b, 'D1', kernel); t*mat_mult(b, 'D2', kernel)]; % [I; tA]*(I + t^2A^TA)^-1 * [I, -tA']*vec
+    
+        res = [zeros(numRows,numCols); vec(:, :, 2); vec(:, :, 3); vec(:, :, 4)] + c;
+    
+        wk = res(1:numRows, :); % In n x n
+        vk = res((numRows + 1):end, :); % In 3n x n
+    
+        % Perform update
+        pk = pk + rho*(wk - xk); % n x n matrix
+        qk = qk + rho*(vk - zk); % 3n x n matrix
+    
+        % Update error
+        %% TODO: ERROR UPDATE
+    
+        % Save variables
+        errors(k) = error;
+    
+        if save % Save images at each step only if requested
+            xks(:, :, k) = xk;
+        end
+    
+        % Print status
+        if verbose
+            disp("Finished iteration " + num2str(k) + " with loss: " + error);
+        end
+    
+        % Update iteration
+        k = k + 1;
+    end
+    t_run = toc; % End Timer
+    
+    % Compile outputs
+    D = struct();
+    D.xf = boxProx(pk); % Solution
+    D.t = t_run; % Run time
+    D.k_end = k-1; % Number of iterations
+    D.e_end = 0; % Error at end
+    D.ek = errors(1:D.k_end); % Error vs time
+    
+    if save % Save image at each iteration vs. time if requested
+        D.xk = xks(:, :, 1:D.k_end);
+    end
 end

@@ -26,7 +26,8 @@ params.verbose = true; % Print additional information about function run
 params.display = true; % Display images
 params.save_iters = true; % Save iterates
 
-[im_clean, ~, D] = imopt(b, kernel, 'primal_dr', params);
+%[im_clean, ~, D] = imopt(b, kernel, 'primal_dr', params);
+[im_clean, ~, D] = imopt(b, kernel, 'primaldual_dr', params);
 
 figure('Name', "Image after de-blurring");
 imshow(im_clean, []);
