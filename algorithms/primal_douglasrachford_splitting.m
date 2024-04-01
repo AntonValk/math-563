@@ -1,4 +1,39 @@
-function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_g, t, rho, k_max, e_t, save)
+% primal_douglasrachford_splitting
+%
+% Implements non-blind image deblurring using the primal douglas rachford
+% method, as described in [1]. Stops when a specified error threshold is
+% met or when a maximum number of iterations have been carried out.
+%
+% Inputs:
+%   b: The blurred image. [m x n Matrix]
+%   kernel: The kernel used to blur the image. [k x k Matrix]
+%   x_init: The initial guess for the deblurred image. [m x n Matrix]
+%   prox_g: The proximal operator computation for g(x), the regularization
+%           terms. [Function Handle]
+%   t: Step size. [Double]
+%   rho: Regularization parameter. [Double]
+%   k_max: Maximum number of iterations. [Integer]
+%   e_t: Error threshold. [Double]
+%   save: A boolean, indicating whether the image iterates should be saved. [Logical]
+%   verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
+%
+% Outputs:
+%   D: A structure containing the final image and algorithm metrics. [Struct]
+%       xf: The final image. [m x n Matrix]
+%       t: The time it took to run the optimization algorithm. [Double, Seconds]
+%       k_end: The number of iterations ran. [Integer]
+%       e_end: Error at the final iteration. [Double]
+%       ek: Error at each iteration [1 x k_end Matrix]
+%       xk: The image at each iteration [m x n x k_end Matrix] (Only output if save is true)
+%
+% Authors: Linda Hu, Cheng Shou, April Niu, Aidan Gerkis
+% Date: 22-03-2024
+%
+% References:
+%   [1]: C. Paquette, "MATH 463/563 - Convex Optimization, Project Description" 
+%        in MATH 564 - Honours Convex Optimization.
+
+function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_g, t, rho, k_max, e_t, save, verbose)
     [numRows, numCols]=size(b);
     
     % Arrays to store outputs
@@ -42,11 +77,19 @@ function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_g, t, rho,
         z1k = z1k + rho*(u - x);
         z2k = z2k + rho*(v - y);
         
+        % Update error
+        %% TODO: ERROR UPDATE
+
         % Save variables
         errors(k) = error;
         
         if save % Save images at each step only if requested
             xk(:, :, k) = x;
+        end
+        
+        % Print status
+        if verbose
+            disp("Finished iteration " + num2str(k) + " with loss: " + error);
         end
 
         % Update iteration

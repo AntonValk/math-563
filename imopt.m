@@ -85,7 +85,7 @@ function varargout = imopt(b, kernel, alg, p_in)
     %% TODO: How to handle different error metrics....
 
     if params.verbose
-        disp("==============Parsing Input Parameters==============");
+        disp("=========++=====Parsing Input Parameters=======++=======");
     end
 
     % Build function handle for prox g
@@ -97,14 +97,14 @@ function varargout = imopt(b, kernel, alg, p_in)
     % Build function handle for algorithm & structure to store inputs    
     switch alg
         case 'primal_dr'
-            deblur = @(im)primal_douglasrachford_splitting(im, kernel, params.x_init, prox_g, params.t, params.rho, params.max_iter, params.e_t, params.save_iters);
+            deblur = @(im)primal_douglasrachford_splitting(im, kernel, params.x_init, prox_g, params.t, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile parameters for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Primal Douglas-Rachford Splitting";
         case 'primaldual_dr'
-            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.x_init, params.t, params.rho, params.max_iter, params.e_t, params.save_iters);
+            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.x_init, params.t, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile parameters for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
@@ -112,14 +112,14 @@ function varargout = imopt(b, kernel, alg, p_in)
             alg_name = "Primal-Dual Douglas-Rachford Splitting";
         case 'admm'
             %% TODO: Make sure params are right in this function call
-            deblur = @(im)admm(im, kernel, params.x_init, params.rho, params.max_iter, params.e_t, params.save_iters);
+            deblur = @(im)admm(im, kernel, params.x_init, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Alternating Direction Method of Multipliers";
         case 'chambolle_pock'
-            deblur = @(im)chambolle_pock(im, kernel, params.x_init, params.t, params.s, params.max_iter, params.e_t, params.save_iters);
+            deblur = @(im)chambolle_pock(im, kernel, params.x_init, params.t, params.s, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
@@ -144,7 +144,7 @@ function varargout = imopt(b, kernel, alg, p_in)
 
     D = deblur(b);
 
-    disp("==============Deblurring Completed==============");
+    disp("==================Deblurring Completed==================");
 
     % Print outputs
     if params.verbose
