@@ -36,16 +36,16 @@ function p = get_default(alg, b)
             p.gamma = 1.5; % Gamma
             p.rho = 0.5; % Regularization constant
         case 'primaldual_dr'
-            p.t = 1; % Step size
-            p.gamma = 1.5; % Gamma
-            p.rho = 0.5; % Regularization constant
+            p.t = 0.005; % Step size
+            p.gamma = 0.005; % Gamma
+            p.rho = 0.1; % Regularization constant
         case 'admm'
             p.t = 1; % Step size
             p.gamma = 1.5; % Gamma
             p.rho = 0.5; % Regularization constant
         case 'chambolle_pock'
-            p.t = 1; % Step size
-            p.s = 1; % Step size
-            p.gamma = 1.5; % Gamma
+            p.t = 1e-12; % Step size
+            p.s = 1e-12; % Step size
+            p.gamma = 0.5; % Gamma
     end
 end
