@@ -31,7 +31,7 @@ function M = deblur_movie(D)
         tiledlayout(3, 2);
 
         nexttile(1, [2, 2]); % Plot image - Span a 2x2 grid
-        imshow(xk(:, :, i));
+        imshow(xk(:, :, i), []);
         title("\textbf{Image at Iteration " + num2str(i) + "}");
         
         nexttile(5, [1, 2]); % Plot error - Span a 1x2 grid
