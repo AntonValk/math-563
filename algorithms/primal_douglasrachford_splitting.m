@@ -1,4 +1,4 @@
-function D = primal_douglasrachford_splitting(b, kernel, prox_g, t, rho, k_max, e_t)
+function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_g, t, rho, k_max, e_t, save)
     [numRows, numCols]=size(b);
     
     % Arrays to store outputs
@@ -8,15 +8,14 @@ function D = primal_douglasrachford_splitting(b, kernel, prox_g, t, rho, k_max, 
     end
 
     % Initialize
-    %z1 = b;
-    z1k = zeros(numRows, numCols);
+    z1k = x_init;
     z2k = [mat_mult(z1k, 'K', kernel); mat_mult(z1k, 'D1', kernel); mat_mult(z1k, 'D2', kernel)];
     
-    k = 0;
+    k = 1;
     error = e_t*10;
 
     tic; % Start Timer
-    while error > e_t || k < k_max
+    while error > e_t && k < k_max
         % Split z2k into its components
         z2 = mat_split(z2k, 3);
         %z21 = z2k(1:numRows, :);
@@ -47,7 +46,7 @@ function D = primal_douglasrachford_splitting(b, kernel, prox_g, t, rho, k_max, 
         errors(k) = error;
         
         if save % Save images at each step only if requested
-            xk(k) = x;
+            xk(:, :, k) = x;
         end
 
         % Update iteration
@@ -59,12 +58,12 @@ function D = primal_douglasrachford_splitting(b, kernel, prox_g, t, rho, k_max, 
     D = struct();
     D.xf = boxProx(z1k); % Solution
     D.t = t_run; % Run time
-    D.k_end = k; % Number of iterations
+    D.k_end = k-1; % Number of iterations
     D.e_end = 0; % Error at end
-    D.ek = errors; % Error vs time
+    D.ek = errors(1:D.k_end); % Error vs time
     
     if save % Save image at each iteration vs. time if requested
-        D.xk = xk;
+        D.xk = xk(:, :, 1:D.k_end);
     end
 end 
 

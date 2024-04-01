@@ -56,7 +56,7 @@ function varargout = imopt(b, kernel, alg, p_in)
     end
 
     % Evaluate input parameter structure
-    params = get_default(alg);
+    params = get_default(alg, b);
 
     if exist('p_in') % If custom parameters were passed overwrite default values
         names = fieldnames(p_in);
@@ -83,11 +83,8 @@ function varargout = imopt(b, kernel, alg, p_in)
     % other algs....
     
     %% TODO: How to handle different error metrics....
-    
-    v = params.verbose;
-    d = params.display;
 
-    if v
+    if params.verbose
         disp("==============Parsing Input Parameters==============");
     end
 
@@ -96,34 +93,33 @@ function varargout = imopt(b, kernel, alg, p_in)
     
     %% TODO: Double check which variables are actually needed in the function
     %%       Address mycourses posts comment -> Should be easy with this implementation
-    %%       Change function handles of the algs
 
-    % Build function handle for algorithm
+    % Build function handle for algorithm & structure to store inputs    
     switch alg
         case 'primal_dr'
-            deblur = @(im)primal_douglasrachford_splitting(im, kernel, prox_g, params.t, params.rho, params.max_iter, params.e_t);
+            deblur = @(im)primal_douglasrachford_splitting(im, kernel, params.x_init, prox_g, params.t, params.rho, params.max_iter, params.e_t, params.save_iters);
             
-            % Compile outputs for verbose mode
+            % Compile parameters for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Primal Douglas-Rachford Splitting";
         case 'primaldual_dr'
-            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.t, params.rho, params.max_iter, params.e_t);
+            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.x_init, params.t, params.rho, params.max_iter, params.e_t, params.save_iters);
             
-            % Compile outputs for verbose mode
+            % Compile parameters for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Primal-Dual Douglas-Rachford Splitting";
         case 'admm'
             %% TODO: Make sure params are right in this function call
-            deblur = @(im)admm(im, kernel, params.rho, params.max_iter, params.e_t);
+            deblur = @(im)admm(im, kernel, params.x_init, params.rho, params.max_iter, params.e_t, params.save_iters);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Alternating Direction Method of Multipliers";
         case 'chambolle_pock'
-            deblur = @(im)chambolle_pock(im, kernel, params.t, params.s, params.max_iter, params.e_t);
+            deblur = @(im)chambolle_pock(im, kernel, params.x_init, params.t, params.s, params.max_iter, params.e_t, params.save_iters);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
@@ -137,7 +133,7 @@ function varargout = imopt(b, kernel, alg, p_in)
     % Run deblurring algorithm
     disp("==============Running Deblurring Algorithm==============");
 
-    if v
+    if params.verbose
         disp("Algorithm: " + alg_name);
         disp("  " + p_vals(1));
         disp("  " + p_vals(2));
@@ -151,7 +147,7 @@ function varargout = imopt(b, kernel, alg, p_in)
     disp("==============Deblurring Completed==============");
 
     % Print outputs
-    if v
+    if params.verbose
         disp("Deblurring algorithm completed successfully.");
         disp("Total Time: " + num2str(D.t) + " s");
         disp("Total Iterations: " + num2str(D.k_end));
@@ -164,16 +160,17 @@ function varargout = imopt(b, kernel, alg, p_in)
         end
     end
     
-    % Display output statistics
-    if d
-        %% TODO: Display code
-        % Write these as functions that plot the desired value
-        % Error evolution
-        % Convergence rate (linear & sublinear?)
-        % Movie of image evolution over time (if save is on)
+    % Display output plots
+    if params.display
+        imopt_display(D, 'Error Evolution');
+        imopt_display(D, 'Convergence');
+        imopt_display(D, 'Image Iterates', 1);
     end
     
     % Compile outputs
+    D.inputs = params;
+    D.inputs.alg_name = alg_name;
+
     varargout = cell(1, nargout);
 
     switch nargout % Create outputs and return
@@ -184,7 +181,7 @@ function varargout = imopt(b, kernel, alg, p_in)
             varargout{2} = D.ef;
         case 3 % Return final image, final error, and output structure
             varargout{1} = D.xf;
-            varargout{2} = D.ef;
+            varargout{2} = D.e_end;
             varargout{3} = D;
         otherwise
             disp("Error in imopt: Too many outputs requested.");

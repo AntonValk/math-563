@@ -11,13 +11,17 @@
 % Author: Aidan Gerkis
 % Date: 31-3-2024
 
-function p = get_default(alg)
+function p = get_default(alg, b)
     p = struct(); % Initialize
     
     % Output Parameters
     p.verbose = 0; % Verbose mode disabled
     p.display = 1; % Display plots of convergence
     p.save_iters = 0; % Disable saving of all iterates
+    
+    % Initial Starting Point - 0 by default
+    [nr, nc] = size(b);
+    p.x_init = zeros(nr, nc);
 
     % Add global algorithm parameters
     p.max_iter = 500; % Maximum number of iterations
