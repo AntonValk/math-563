@@ -46,11 +46,11 @@ function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_g, t, rho,
     z1k = x_init;
     z2k = [mat_mult(z1k, 'K', kernel); mat_mult(z1k, 'D1', kernel); mat_mult(z1k, 'D2', kernel)];
     
-    k = 1;
-    error = e_t*10;
+    k = 1; % Current iteration
+    error = e_t*10; % Current error
 
     tic; % Start Timer
-    while error > e_t && k < k_max
+    while error > e_t && k < k_max % Iterate until error convergence or max iterations has been exceeded
         % Split z2k into its components
         z2 = mat_split(z2k, 3);
         %z21 = z2k(1:numRows, :);
