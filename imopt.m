@@ -19,9 +19,7 @@ function varargout = imopt(b, kernel, alg, p_in)
         "e_meas", "regularization", "t", "s", "gamma", "rho"]; % List of all legal field names for the parameter structure
     fields_type = ["logical", "logical", "logical", "numeric", "numeric", ...
         "char", "char", "numeric", "numeric", "numeric", "numeric"]; % List of types for all fields
-    
-    %% TODO: Add input parsing -> Make sure inputs are of the correct type
-    
+        
     % Parse Inputs - Check number & assign default values
     switch nargin
         case 1
@@ -85,11 +83,11 @@ function varargout = imopt(b, kernel, alg, p_in)
     %% TODO: How to handle different error metrics....
 
     if params.verbose
-        disp("=========++=====Parsing Input Parameters=======++=======");
+        disp("================Parsing Input Parameters================");
     end
 
-    % Build function handle for prox g
-    prox_g = @(x, t) prox_tg(x, t, params.gamma, params.regularization, b);
+    % Build generic function handle for prox g
+    prox_g = @(x, t, g) prox_tg(x, t, g, params.regularization, b);
     
     %% TODO: Double check which variables are actually needed in the function
     %%       Address mycourses posts comment -> Should be easy with this implementation
@@ -97,6 +95,7 @@ function varargout = imopt(b, kernel, alg, p_in)
     % Build function handle for algorithm & structure to store inputs    
     switch alg
         case 'primal_dr'
+            prox_g = @(x, t) prox_g(x, t, params.gamma); % Function handle for prox
             deblur = @(im)primal_douglasrachford_splitting(im, kernel, params.x_init, prox_g, params.t, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile parameters for verbose mode
@@ -104,14 +103,16 @@ function varargout = imopt(b, kernel, alg, p_in)
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Primal Douglas-Rachford Splitting";
         case 'primaldual_dr'
-            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.x_init, params.t, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
-            
+            prox_g = @(x, t) prox_g(x, t, 1/params.gamma); % Function handle for prox
+            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.x_init, prox_g, params.t, params.gamma, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
+
             % Compile parameters for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Primal-Dual Douglas-Rachford Splitting";
         case 'admm'
             %% TODO: Make sure params are right in this function call
+            prox_g = @(x, t) prox_g(x, t, params.gamma); % Function handle for prox
             deblur = @(im)admm(im, kernel, params.x_init, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile outputs for verbose mode
@@ -119,6 +120,7 @@ function varargout = imopt(b, kernel, alg, p_in)
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Alternating Direction Method of Multipliers";
         case 'chambolle_pock'
+            prox_g = @(x, t) prox_g(x, t, params.gamma); % Function handle for prox
             deblur = @(im)chambolle_pock(im, kernel, params.x_init, params.t, params.s, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile outputs for verbose mode
@@ -164,7 +166,9 @@ function varargout = imopt(b, kernel, alg, p_in)
     if params.display
         imopt_display(D, 'Error Evolution');
         imopt_display(D, 'Convergence');
-        imopt_display(D, 'Image Iterates', 1);
+        if params.save_iters
+            imopt_display(D, 'Image Iterates', 1);
+        end
     end
     
     % Compile outputs
