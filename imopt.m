@@ -14,7 +14,7 @@
 % And supports up to three outputs.
 %
 % Inputs:
-%   b: The blurred image. [m x n Matrix]
+%   b: The blurred & true images. [m x n Matrix]
 %   kernel: The kernel used to deblur the image. [k x k Matrix]
 %   alg: The algorithm with which to deblur the image. Should be one of:
 %           - 'primal_dr'
@@ -95,6 +95,15 @@ function varargout = imopt(b, kernel, alg, p_in)
             return
         end
     end
+    
+    % Extract blurred image and ground truth
+    [~, ~, k] = size(b); 
+    if k == 2
+        x_true = b(:, :, 2);
+        b = b(:, :, 1);
+    else
+        disp("Error in imopt: Expected ground truth to be passed");
+    end
 
     % Evaluate input parameter structure
     params = get_default(alg, b);
@@ -124,6 +133,8 @@ function varargout = imopt(b, kernel, alg, p_in)
     % other algs....
     
     %% TODO: How to handle different error metrics....
+    % Build error metric function
+    %err_eval = @(x_hat) rmse(x_true, x_hat);
 
     if params.verbose
         disp("================Parsing Input Parameters================");
@@ -132,13 +143,10 @@ function varargout = imopt(b, kernel, alg, p_in)
     % Build generic function handle for prox of regularization function
     prox_l = @(x, t) prox_ln(x, t, params.regularization, b);
 
-    %% TODO: Double check which variables are actually needed in the function
-    %%       Address mycourses posts comment -> Should be easy with this implementation
-
     % Build function handle for algorithm & structure to store inputs    
     switch alg
         case 'primal_dr'
-            deblur = @(im)primal_douglasrachford_splitting(im, kernel, params.x_init, prox_l, params.t, params.gamma, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
+            deblur = @(im)primal_douglasrachford_splitting(im, kernel, params.x_init, prox_l, params.t, params.gamma, params.rho, params.max_iter, params.e_t, err_eval, params.save_iters, params.verbose);
             
             % Compile parameters for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
@@ -152,8 +160,7 @@ function varargout = imopt(b, kernel, alg, p_in)
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Primal-Dual Douglas-Rachford Splitting";
         case 'admm'
-            %% TODO: Make sure params are right in this function call
-            deblur = @(im)admm(im, kernel, params.x_init, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
+            deblur = @(im)admm(im, kernel, params.x_init, prox_l, params.t, params.rho, params.gamma, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);

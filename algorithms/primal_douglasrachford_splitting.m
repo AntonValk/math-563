@@ -33,7 +33,7 @@
 %   [1]: C. Paquette, "MATH 463/563 - Convex Optimization, Project Description" 
 %        in MATH 564 - Honours Convex Optimization.
 
-function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_l, t, g, rho, k_max, e_t, save, verbose)
+function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_l, t, g, rho, k_max, e_t, err_eval, save, verbose)
     [numRows, numCols]=size(b);
     
     % Arrays to store outputs
@@ -72,7 +72,8 @@ function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_l, t, g, r
         z2k = z2k + rho*(v - y);
         
         % Update error
-        %% TODO: ERROR UPDATE
+        %% TODO: ERROR UPDATE <- put this in the right spot
+        error = err_eval(x);
 
         % Save variables
         errors(k) = error;
