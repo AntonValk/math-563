@@ -14,6 +14,7 @@
 %   rho: Regularization parameter. [Double]
 %   k_max: Maximum number of iterations. [Integer]
 %   e_t: Error threshold. [Double]
+%   err_eval: A function evaluate the image error at the current iteration. [Function Handle]
 %   save: A boolean, indicating whether the image iterates should be saved. [Logical]
 %   verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
 %
@@ -97,7 +98,7 @@ function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_l, t, g, r
     D.xf = boxProx(z1k); % Solution
     D.t = t_run; % Run time
     D.k_end = k-1; % Number of iterations
-    D.e_end = 0; % Error at end
+    D.e_end = errors(k-1); % Error at end
     D.ek = errors(1:D.k_end); % Error vs time
     
     if save % Save image at each iteration vs. time if requested

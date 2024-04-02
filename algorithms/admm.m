@@ -1,5 +1,40 @@
+% admm
+%
+% Implements non-blind image deblurring using the admm
+% method, as described in [1]. Stops when a specified error threshold is
+% met or when a maximum number of iterations have been carried out.
+%
+% Inputs:
+%   b: The blurred image. [m x n Matrix]
+%   kernel: The kernel used to blur the image. [k x k Matrix]
+%   x_init: The initial guess for the deblurred image. [m x n Matrix]
+%   prox_l: A method to compute the proximal operator for the regularization term. [Function Handle]
+%   t: Step size. [Double]
+%   g: The constant modifying the iso-norm. [Double]
+%   rho: Regularization parameter. [Double]
+%   k_max: Maximum number of iterations. [Integer]
+%   e_t: Error threshold. [Double]
+%   err_eval: A function evaluate the image error at the current iteration. [Function Handle]
+%   save: A boolean, indicating whether the image iterates should be saved. [Logical]
+%   verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
+%
+% Outputs:
+%   D: A structure containing the final image and algorithm metrics. [Struct]
+%       xf: The final image. [m x n Matrix]
+%       t: The time it took to run the optimization algorithm. [Double, Seconds]
+%       k_end: The number of iterations ran. [Integer]
+%       e_end: Error at the final iteration. [Double]
+%       ek: Error at each iteration [1 x k_end Matrix]
+%       xk: The image at each iteration [m x n x k_end Matrix] (Only output if save is true)
+%
+% Authors: Linda Hu, Cheng Shou, April Niu
+% Date: 22-03-2024
+%
+% References:
+%   [1]: C. Paquette, "MATH 463/563 - Convex Optimization, Project Description" 
+%        in MATH 564 - Honours Convex Optimization.
 
-function D = admm(b, kernel, x_init, prox_l, t, rho, g, k_max, e_t, save, verbose)
+function D = admm(b, kernel, x_init, prox_l, t, rho, g, k_max, e_t, err_eval, save, verbose)
     [numRows, numCols]=size(b);
     
     % Arrays to store outputs
@@ -45,7 +80,7 @@ function D = admm(b, kernel, x_init, prox_l, t, rho, g, k_max, e_t, save, verbos
         z3 = z3 + t * (mat_mult(xk, 'D2', kernel) - y_aux(:,:,2));
     
         % Update error
-        %% TODO: ERROR UPDATE
+        error = err_eval(x);
     
         % Save variables
         errors(k) = error;
@@ -73,7 +108,7 @@ function D = admm(b, kernel, x_init, prox_l, t, rho, g, k_max, e_t, save, verbos
     D.xf = xSol; % Solution
     D.t = t_run; % Run time
     D.k_end = k-1; % Number of iterations
-    D.e_end = 0; % Error at end
+    D.e_end = errors(k-1); % Error at end
     D.ek = errors(1:D.k_end); % Error vs time
     
     if save % Save image at each iteration vs. time if requested

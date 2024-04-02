@@ -14,6 +14,7 @@
 %   rho: Regularization parameter. [Double]
 %   k_max: Maximum number of iterations. [Integer]
 %   e_t: Error threshold. [Double]
+%   err_eval: A function evaluate the image error at the current iteration. [Function Handle]
 %   save: A boolean, indicating whether the image iterates should be saved. [Logical]
 %   verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
 %
@@ -33,7 +34,7 @@
 %   [1]: C. Paquette, "MATH 463/563 - Convex Optimization, Project Description" 
 %        in MATH 564 - Honours Convex Optimization.
 
-function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, prox_l, t, g, rho, k_max, e_t, save, verbose)
+function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, prox_l, t, g, rho, k_max, e_t, err_eval, save, verbose)
     [numRows, numCols]=size(b);
     
     % Arrays to store outputs
@@ -78,7 +79,7 @@ function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, prox_l, t,
         qk = qk + rho*(vk - zk); % 3n x n matrix
     
         % Update error
-        %% TODO: ERROR UPDATE
+        error = err_eval(x);
     
         % Save variables
         errors(k) = error;
@@ -102,7 +103,7 @@ function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, prox_l, t,
     D.xf = boxProx(pk); % Solution
     D.t = t_run; % Run time
     D.k_end = k-1; % Number of iterations
-    D.e_end = 0; % Error at end
+    D.e_end = errors(k-1); % Error at end
     D.ek = errors(1:D.k_end); % Error vs time
     
     if save % Save image at each iteration vs. time if requested
