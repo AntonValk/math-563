@@ -27,9 +27,9 @@ function error_evo(D)
     plot(iterations, e)
     hold on;
     yline(e_t, '--r')
-    title("\textbf{Error Evolution vs. Iterations}");
+    title("\textbf{$\epsilon$ vs. Iterations}");
     xlabel("Iteration");
-    ylabel("Error");
+    ylabel("$\epsilon$");
     legend('', 'Error Threshold');
     grid on;
     hold off;

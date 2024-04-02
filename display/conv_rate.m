@@ -31,9 +31,9 @@ function conv_rate(D)
     semilogy(iterations, e);
     hold on;
     yline(e_t, '--r')
-    title("\textbf{log(Error Evolution) vs. Iterations}");
+    title("\textbf{log($\epsilon$) vs. Iterations}");
     xlabel("Iteration");
-    ylabel("log(Error)");
+    ylabel("log($\epsilon$)");
     legend('', 'Error Threshold');
     grid on;
     hold off;
