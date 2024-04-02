@@ -120,8 +120,8 @@ function varargout = imopt(b, kernel, alg, p_in)
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Alternating Direction Method of Multipliers";
         case 'chambolle_pock'
-            prox_g = @(x, t) prox_g(x, t, params.gamma); % Function handle for prox
-            deblur = @(im)chambolle_pock(im, kernel, params.x_init, params.t, params.s, params.max_iter, params.e_t, params.save_iters, params.verbose);
+            prox_g = @(x, t) prox_g(x, t, 1/params.gamma); % Function handle for prox
+            deblur = @(im)chambolle_pock(im, kernel, params.x_init, prox_g, params.t, params.s, params.gamma, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
