@@ -47,5 +47,7 @@ function p = get_default(alg, b)
             p.t = 1e-12; % Step size
             p.s = 1e-12; % Step size
             p.gamma = 0.5; % Gamma
+        otherwise
+            error("Unrecognized algorithm specified.");
     end
 end

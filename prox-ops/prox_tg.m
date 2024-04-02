@@ -23,8 +23,7 @@ function z = prox_tg(x, t, g, reg, b)
         case 'L2' % Compute prox of L2 norm
             z(:, :, 1) = l2squaredProx(x(:, :, 1) - b, t) + b; % Check this
         otherwise % Change to throw error
-            disp("Error in prox_tg: Unrecognized regularization function specified.");
-            return
+            error("Unrecognized regularization function specified.");
     end
 
     % Compute prox of Iso norm

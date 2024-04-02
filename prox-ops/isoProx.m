@@ -34,9 +34,7 @@ function P = isoProx(w, g)
 
     % Validate input
     if g < 0 % Check sign of scaling factor
-        disp("Error in isoProx: Scaling factor must be positive and non-zero.")
-        P = 0;
-        return
+        error("Scaling factor must be positive and non-zero.");
     end
     
     % Compute prox op

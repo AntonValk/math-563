@@ -18,8 +18,8 @@ imshow(b,[]);
 
 %im_clean = primal_douglasrachford_splitting(b, kernel, 1, 0.5, 1.5, 50); %0.05, 250);
 %im_clean = primaldual_douglasrachford_splitting(b, kernel, 0.005, 0.005, 0.1, 150); % <- In general smaller parameters seem to work better here, sweep those
-%im_clean = admm(b, kernel, 0.005, 0.005, 0.1, 150);
-im_clean = chambolle_pock(b, kernel, 1e-12, 1e-12, 0.5, 250);
+im_clean = admm(b, kernel, 0.005, 0.005, 0, 150);
+%im_clean = chambolle_pock(b, kernel, 1e-12, 1e-12, 0.5, 250);
 
 figure('Name', "Image after de-blurring");
 imshow(im_clean, []);

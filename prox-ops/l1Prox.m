@@ -34,9 +34,7 @@ function P = l1Prox(x, l)
 
     % Validate input
     if l < 0 % Check sign of scaling factor
-        disp("Error in l1Prox: Scaling factor must be positive and non-zero.")
-        P = 0;
-        return
+        error("Scaling factor must be positive and non-zero.");
     end
 
     % Compute proximal operator

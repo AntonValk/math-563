@@ -14,6 +14,10 @@
 % Date: 27/03/2024
 
 function split = mat_split(A, k)
+    if mod(length(A(:, 1)), k) ~= 0
+        error("Unexpected dimension. The number of rows in matrix A must be divisible by k.");
+    end
+
     n = length(A(1, :)); % Number of Columns
 
     split = A(1:n, :); % First split
