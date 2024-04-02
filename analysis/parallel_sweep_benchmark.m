@@ -11,14 +11,14 @@
 % Outputs:
 %   sim_time: The total time to run all simulations in parallel. [Seconds]
 %   speed_up: The ratio of sim time to compute time. [Unitless]
-%   bytes_tf: The total number of bytes transferred. [Bytes]
+%   bytes_tf: The total number of bytes transferred. [GB]
 %
 % Author: Aidan Gerkis
 % Date: 02-04-2024
 
 function [sim_time, speed_up, bytes_tf] = parallel_sweep_benchmark(n_pool)
     %% Parameters
-    n = 100; % Number of parameters to sweep in each direction
+    n = 5; % Number of parameters to sweep in each direction
     k = 3; % The number of parameters to sweep, each algorithm has 3 parameters
     
     lb_1 = 1e-11; % Lower bound on parameter one
@@ -83,6 +83,7 @@ function [sim_time, speed_up, bytes_tf] = parallel_sweep_benchmark(n_pool)
     wait(f_opt);
     sim_time = toc; % Total time to run all simulations
     bytes_tf = tocBytes(myPool); % Stop counting bytes
+    bytes_tf = sum(bytes_tf, 1)*1e-9; % Sum total and convert to GB
 
     %% Analyze Outputs
     es = zeros(n, n, n); % Store error for each parameter combination

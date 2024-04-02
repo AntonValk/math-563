@@ -15,7 +15,7 @@ clear; clc; close all;
 fn_handle = @(n_pool)parallel_sweep_benchmark(n_pool);
 
 % Pool Sizes to Consider
-n_pool = [4, 8];
+n_pool = [2, 4, 8, 12, 16, 20, 24];
 
 % Initialize Output Arrays
 sim_times = zeros(1, length(n_pool));
