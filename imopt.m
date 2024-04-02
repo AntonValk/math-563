@@ -1,12 +1,55 @@
 % imopt.m
 %
-% THE package.
+% A package to implement four image deblurring algorithms: primal
+% douglas-rachford splitting, primal-dual douglas-rachford splitting, admm,
+% and chambolle-pock. Supports a very of interactability, allowing the user
+% access to all algorithm hyperparameters. Also supports different outputs
+% and display modes.
+%
+% May be called in one of three ways:
+%   imopt(b, kernel)
+%   imopt(b, kernel, alg)
+%   imopt(b, kernel, alg, p_in)
+%
+% And supports up to three outputs.
 %
 % Inputs:
-%   Some things.
+%   b: The blurred image. [m x n Matrix]
+%   kernel: The kernel used to deblur the image. [k x k Matrix]
+%   alg: The algorithm with which to deblur the image. Should be one of:
+%           - 'primal_dr'
+%           - 'primaldual_dr'
+%           - 'admm'
+%           - 'chambolle_pock'
+%   p_in: A parameter structure containing inputs to the algorithms. May
+%   contain any (or none) of the following:
+%           x_init: The initial guess for the deblurred image. [m x n Matrix]
+%           t: Step size. [Double] (For all algorithms)
+%           s: Step size. [Double] (For the Chambolle-Pock method)
+%           g: The constant modifying the iso-norm in the problem statement. [Double]
+%              (For all algorithms)
+%           rho: Regularization parameter. [Double] (For the primal-dr,
+%                primaldual-dr, and admm methods.)
+%           regularization: The regularization type to use. May be one of
+%                            - 'L1'
+%                            - 'L2'
+%           max_iters: Maximum number of iterations. [Integer]
+%           e_t: Error threshold. [Double]
+%           verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
+%           display: A boolean, indicating whether plots should be made. [Logical]
+%           save_iters: A boolean, indicating whether the image iterates should be saved. [Logical]
 %
 % Outputs:
-%   some (hopefully less blurry) things
+%   xf: The final image, after deblurring. [m x n Matrix]
+%   e_end: The loss function value at the final iteration. [Double]
+%   D: The complete output structure from the algorithm calls. [Struct]
+%       xf: The final image. [m x n Matrix]
+%       t: The time it took to run the optimization algorithm. [Double, Seconds]
+%       k_end: The number of iterations ran. [Integer]
+%       e_end: Error at the final iteration. [Double]
+%       ek: Error at each iteration [1 x k_end Matrix]
+%       xk: The image at each iteration [m x n x k_end Matrix] (Only output if save is true)
+%       inputs: A structure containing the inputs to the imopt package. [Structure]
 %
 % Author(s): Aidan Gerkis
 % Date: 30-3-2024
