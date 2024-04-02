@@ -8,10 +8,9 @@
 %   b: The blurred image. [m x n Matrix]
 %   kernel: The kernel used to blur the image. [k x k Matrix]
 %   x_init: The initial guess for the deblurred image. [m x n Matrix]
-%   prox_g: The proximal operator computation for g(x), the regularization
-%           terms. [Function Handle]
+%   prox_l: A method to compute the proximal operator for the regularization term. [Function Handle]
 %   t: Step size. [Double]
-%   g: The constant modifying the iso-norm in the problem statement. [Double]
+%   g: The constant modifying the iso-norm. [Double]
 %   rho: Regularization parameter. [Double]
 %   k_max: Maximum number of iterations. [Integer]
 %   e_t: Error threshold. [Double]
@@ -34,7 +33,7 @@
 %   [1]: C. Paquette, "MATH 463/563 - Convex Optimization, Project Description" 
 %        in MATH 564 - Honours Convex Optimization.
 
-function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, prox_g, t, g, rho, k_max, e_t, save, verbose)
+function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, prox_l, t, g, rho, k_max, e_t, save, verbose)
     [numRows, numCols]=size(b);
     
     % Arrays to store outputs
@@ -53,26 +52,16 @@ function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, prox_g, t,
     tic; % Start Timer
     while error > e_t && k < k_max % Iterate until error convergence or max iterations has been exceeded
         q = mat_split(qk, 3); % Convert qk to a 3D tensor
-        q_prox = q;
-        q_prox(:, :, 1) = q_prox(:, :, 1)/t;
-        q_prox(:, :, 2:3) = q_prox(:, :, 2:3)/(t*g);
     
         % Compute Prox Ops
         xk = boxProx(pk);   %x is n by n matrix
+        
+        z1 = q(:, :, 1) - t*prox_l(q(:, :, 1)/t, 1/t); % Part 1 of prox_sg*
+        z2 = q(:, :, 2:3) - (t*g)*isoProx(q(:, :, 2:3)/(t*g), 1/(t*g)); % Part 2 of prox_sg*
+        zk = [z1; z2(:, :, 1); z2(:, :, 2)]; % Compile prox_sg*
     
-        zk_conj = prox_g(q_prox, 1/t); % Prox op of g
-    
-        z1 = q(:, :, 1) - t*zk_conj(:, :, 1); % Prox op of g* (regularization part)
-        z2 = q(:, :, 2:3) - (t*g)*zk_conj(:, :, 2:3); % Prox op of g* (iso-norm part)
-    
-        %z1 = q(:, :, 1) - t*l1Prox(q(:, :, 1)/t - b, 1/t) - b; % Equation 8 in reference
-        %z2 = q(:, :, 2:3) - (t*g)*isoProx(q(:, :, 2:3)/(t*g), 1/(t*g)); % Why using g
-        z21 = z2(:,:,1);
-        z22 = z2(:,:,2);
-        zk = [z1; z2(:, :, 1); z2(:, :, 2)];
-    
-        % Compute Resolvent of B (pg 7 in reference) <- TODO: Double check
-        vec0  =[2*xk - pk; 2*z1 - q(:,:,1); 2*z21-q(:,:,2);2*z22-q(:,:,3)];
+        % Compute Resolvent of B (pg 7 in reference)
+        vec0  =[2*xk - pk; 2*z1 - q(:,:,1); 2*z2(:,:,1) - q(:,:,2); 2*z2(:,:,2) - q(:,:,3)];
         vec = mat_split(vec0, 4); % Extract matrices corresponding to n x n blocks
     
         a = (vec(:, :, 1)) - t*mat_mult(vec(:, :, 2), 'KT', kernel) - t*mat_mult(vec(:, :, 3), 'D1T', kernel) - t*mat_mult(vec(:, :, 4), 'D2T', kernel); % [I, -tA']*vec

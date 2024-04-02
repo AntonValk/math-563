@@ -8,9 +8,9 @@
 %   b: The blurred image. [m x n Matrix]
 %   kernel: The kernel used to blur the image. [k x k Matrix]
 %   x_init: The initial guess for the deblurred image. [m x n Matrix]
-%   prox_g: The proximal operator computation for g(x), the regularization
-%           terms. [Function Handle]
+%   prox_l: A method to compute the proximal operator for the regularization term. [Function Handle]
 %   t: Step size. [Double]
+%   g: The constant modifying the iso-norm. [Double]
 %   rho: Regularization parameter. [Double]
 %   k_max: Maximum number of iterations. [Integer]
 %   e_t: Error threshold. [Double]
@@ -33,7 +33,7 @@
 %   [1]: C. Paquette, "MATH 463/563 - Convex Optimization, Project Description" 
 %        in MATH 564 - Honours Convex Optimization.
 
-function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_g, t, rho, k_max, e_t, save, verbose)
+function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_l, t, g, rho, k_max, e_t, save, verbose)
     [numRows, numCols]=size(b);
     
     % Arrays to store outputs
@@ -53,17 +53,11 @@ function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_g, t, rho,
     while error > e_t && k < k_max % Iterate until error convergence or max iterations has been exceeded
         % Split z2k into its components
         z2 = mat_split(z2k, 3);
-        %z21 = z2k(1:numRows, :);
-        %z22 = cat(3, z2k((numRows + 1):2*numRows, :), z2k((2*numRows + 1):end, :)); % Change z2 from 2D (2n*n)->3D (n*n*2)
-        
+
         % Compute prox ops
-        x = boxProx(z1k);
-        y = prox_g(z2, t);
-        y1 = y(:, :, 1);
-        y2 = y(:, :, 2:3);
-    
-        %y1 = l1Prox(z2(:, :, 1) - b, t) + b; % From Equation 8 in the reference
-        %y2 = isoProx(z2(:, :, 2:3), t*g);
+        x = boxProx(z1k); % Prox of indicator
+        y1 = prox_l(z2(:, :, 1), t); % Prox of regularization norm
+        y2 = isoProx(z2(:, :, 2:3), t*g); % Prox of isoNorm
     
         % Compute resolvent of B
         appK = mat_mult(2*y1 - z2(:, :, 1), 'KT', kernel); % Compute the K component of the multiplication

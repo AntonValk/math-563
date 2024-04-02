@@ -129,25 +129,23 @@ function varargout = imopt(b, kernel, alg, p_in)
         disp("================Parsing Input Parameters================");
     end
 
-    % Build generic function handle for prox g
-    prox_g = @(x, t, g) prox_tg(x, t, g, params.regularization, b);
-    
+    % Build generic function handle for prox of regularization function
+    prox_l = @(x, t) prox_ln(x, t, params.regularization, b);
+
     %% TODO: Double check which variables are actually needed in the function
     %%       Address mycourses posts comment -> Should be easy with this implementation
 
     % Build function handle for algorithm & structure to store inputs    
     switch alg
         case 'primal_dr'
-            prox_g = @(x, t) prox_g(x, t, params.gamma); % Function handle for prox
-            deblur = @(im)primal_douglasrachford_splitting(im, kernel, params.x_init, prox_g, params.t, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
+            deblur = @(im)primal_douglasrachford_splitting(im, kernel, params.x_init, prox_l, params.t, params.gamma, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile parameters for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Primal Douglas-Rachford Splitting";
         case 'primaldual_dr'
-            prox_g = @(x, t) prox_g(x, t, 1/params.gamma); % Function handle for prox
-            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.x_init, prox_g, params.t, params.gamma, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
+            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.x_init, prox_l, params.t, params.gamma, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
 
             % Compile parameters for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
@@ -155,7 +153,6 @@ function varargout = imopt(b, kernel, alg, p_in)
             alg_name = "Primal-Dual Douglas-Rachford Splitting";
         case 'admm'
             %% TODO: Make sure params are right in this function call
-            prox_g = @(x, t) prox_g(x, t, params.gamma); % Function handle for prox
             deblur = @(im)admm(im, kernel, params.x_init, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile outputs for verbose mode
@@ -163,8 +160,7 @@ function varargout = imopt(b, kernel, alg, p_in)
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Alternating Direction Method of Multipliers";
         case 'chambolle_pock'
-            prox_g = @(x, t) prox_g(x, t, 1/params.gamma); % Function handle for prox
-            deblur = @(im)chambolle_pock(im, kernel, params.x_init, prox_g, params.t, params.s, params.gamma, params.max_iter, params.e_t, params.save_iters, params.verbose);
+            deblur = @(im)chambolle_pock(im, kernel, params.x_init, prox_l, params.t, params.s, params.gamma, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
