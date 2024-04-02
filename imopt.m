@@ -134,7 +134,7 @@ function varargout = imopt(b, kernel, alg, p_in)
     
     %% TODO: How to handle different error metrics....
     % Build error metric function
-    %err_eval = @(x_hat) rmse(x_true, x_hat);
+    err_eval = @(x_hat) imopt_rmse(x_true, x_hat);
 
     if params.verbose
         disp("================Parsing Input Parameters================");
