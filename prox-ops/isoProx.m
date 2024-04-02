@@ -23,7 +23,7 @@
 
 function P = isoProx(w, g)
     % Process inputs
-    n = length(w(:, 1));
+    [m, n, ~] = size(w);
 
     switch nargin % Process input, determine if scaling factors are input
         case 1 % If no scaling factors are input then set g to 1
@@ -33,7 +33,7 @@ function P = isoProx(w, g)
     end
 
     % Validate input
-    if g <= 0 % Check sign of scaling factor
+    if g < 0 % Check sign of scaling factor
         disp("Error in isoProx: Scaling factor must be positive and non-zero.")
         P = 0;
         return
@@ -44,5 +44,9 @@ function P = isoProx(w, g)
     y = w(:,:,2);
 
     %P = max(cat(3, zeros(n), sign(sqrt(x.^2 + y.^2) - g)), [], 3)*(1 - g./sqrt(x.^2 + y.^2)).*w;
-    P = max(cat(3, zeros(n), 1 - g./sqrt(x.^2 + y.^2)), [], 3).*w; % Should be equivalent to above, but without the NaN bug, please check
+    if g == 0 % Edge case when gamma is 0
+        P = zeros(m, n, 2);
+    else
+        P = max(cat(3, zeros(m, n), 1 - g./sqrt(x.^2 + y.^2)), [], 3).*w; % Should be equivalent to above, but without the NaN bug, please check
+    end
 end
