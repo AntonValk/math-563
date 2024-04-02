@@ -35,9 +35,9 @@ function M = deblur_movie(D)
         title("\textbf{Image at Iteration " + num2str(i) + "}");
         
         nexttile(5, [1, 2]); % Plot error - Span a 1x2 grid
-        plot(iterations(1:i), ek(1:i));
+        plot(iterations(1:i), ek(1:i), 'LineWidth', 2);
         xlim([0, iterations(end)]);
-        yline(e_t, '--r')
+        yline(e_t, '--r', 'LineWidth', 2)
         title("\textbf{Error Evolution vs. Iterations}");
         xlabel("Iteration");
         ylabel("Error");

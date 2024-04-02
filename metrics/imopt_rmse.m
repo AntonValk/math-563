@@ -20,7 +20,7 @@
 %   [1]: C. Paquette, MATH 463/563 Assignment 4 (2024).
 
 
-function e = rmse(x, x_hat)
+function e = imopt_rmse(x, x_hat)
 %ERRORS Summary of this function goes here
 %   Detailed explanation goes here
 [N, ~] = size(x);

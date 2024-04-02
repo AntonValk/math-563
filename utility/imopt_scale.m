@@ -25,5 +25,5 @@ function im = imopt_scale(im_name)
     mn = min(I(:));
     I = I - mn;
     mx = max(I(:));
-    Im = I/mx; % Scale image so each pixel is in [0, 1]
+    im = I/mx; % Scale image so each pixel is in [0, 1]
 end
