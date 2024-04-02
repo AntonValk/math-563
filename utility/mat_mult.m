@@ -55,5 +55,7 @@ function Ax = mat_mult(x, A, K, t)
             eigValsMat = ones(numRows, numCols) + t*t*eigArry_KTrans.*eigArry_K + t*t*eigArry_D1Trans.*eigArry_D1...
                 + t*t*eigArry_D2Trans.*eigArry_D2;
             Ax = ifft2(fft2(x)./eigValsMat);
+        otherwise
+            error("Unknown matrix multiplication requested.");
     end
 end

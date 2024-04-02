@@ -14,7 +14,7 @@
 % And supports up to three outputs.
 %
 % Inputs:
-%   b: The blurred & true images. [m x n Matrix]
+%   b: The blurred & true images. Blurred in first index, true in second. [m x n x 2 Tensor]
 %   kernel: The kernel used to deblur the image. [k x k Matrix]
 %   alg: The algorithm with which to deblur the image. Should be one of:
 %           - 'primal_dr'
@@ -62,7 +62,12 @@ function varargout = imopt(b, kernel, alg, p_in)
         "e_meas", "regularization", "t", "s", "gamma", "rho"]; % List of all legal field names for the parameter structure
     fields_type = ["logical", "logical", "logical", "numeric", "numeric", ...
         "char", "char", "numeric", "numeric", "numeric", "numeric"]; % List of types for all fields
-        
+    
+    % Parse Outputs - Check number of outputs requested
+    if nargout > 3
+        error("Too many outputs requested.");
+    end
+
     % Parse Inputs - Check number & assign default values
     switch nargin
         case 1
@@ -84,15 +89,14 @@ function varargout = imopt(b, kernel, alg, p_in)
             argin{3} = alg;
             argin{4} = p_in;
         otherwise
-            disp("Error in imopt: Error in function call, too many input arguments.");
+            error("Error in function call, too many input arguments.");
     end
 
     % Parse inputs - check type
     for i=1:nargin
         if ~isa(argin{i}, input_types(i)) % Display error message and exit if type is incorrect
-            disp("Error in imopt: Unexpected type for parameter '" + in_names(i) + ...
+            error("Unexpected type for parameter '" + in_names(i) + ...
                 "'. Expected a " + input_types(i) + " but got a " +class(argin{i}) + ".");
-            return
         end
     end
     
@@ -102,7 +106,7 @@ function varargout = imopt(b, kernel, alg, p_in)
         x_true = b(:, :, 2);
         b = b(:, :, 1);
     else
-        disp("Error in imopt: Expected ground truth to be passed");
+        error("Error in function call, expected ground truth to be passed.");
     end
 
     % Evaluate input parameter structure
@@ -116,21 +120,15 @@ function varargout = imopt(b, kernel, alg, p_in)
                 if isa(p_in.(names{i}), fields_type(fields_allowed == names{i})) % Check if parameter type is correct
                     params.(names{i}) = p_in.(names{i});
                 else
-                    disp("Error in imopt: Unexpected type for parameter '" + names{i} + ...
+                    error("Unexpected type for parameter '" + names{i} + ...
                         "'. Expected a " + fields_type(fields_allowed == names{i}) + ...
                         " but got a " + class(p_in.(names{i})));
-                    return
                 end
             else
-                disp("Error in imopt: Unrecognized parameter passed in p_in.")
-                return
+                error("Unrecognized parameter passed in p_in.");
             end
         end
     end
-  
-    
-    % NOTE: SWAP ROLES OF s and t in Chambolle Pock! For consistency with
-    % other algs....
     
     %% TODO: How to handle different error metrics....
     % Build error metric function
@@ -174,8 +172,7 @@ function varargout = imopt(b, kernel, alg, p_in)
             p_vals(2) = "s: " + num2str(params.s);
             alg_name = "Chambolle Pock";
         otherwise %% Change to pass error
-            disp("Error in imopt: Unknown algorithm specified.");
-            return
+            error("Unknown optimization algorithm specified.");
     end
 
     % Run deblurring algorithm
@@ -233,7 +230,6 @@ function varargout = imopt(b, kernel, alg, p_in)
             varargout{1} = D.xf;
             varargout{2} = D.e_end;
             varargout{3} = D;
-        otherwise
-            disp("Error in imopt: Too many outputs requested.");
+        % otherwise case is handled on function call
     end
 end

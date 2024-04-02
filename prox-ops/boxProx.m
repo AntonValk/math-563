@@ -33,10 +33,8 @@ function y = boxProx(x, l)
     end
 
     % Validate input
-    if l <= 0 % Check sign of scaling factor
-        disp("Error in boxProx: Scaling factor must be positive and non-zero.")
-        y = 0;
-        return
+    if l < 0 % Check sign of scaling factor
+        error("Scaling factor must be positive.");
     end
     
     % Compute Box Prox

@@ -27,6 +27,6 @@ function imopt_display(D, plot, n)
             axis off;
             movie(M, n);
         otherwise
-            disp("Error in imopt_display: Unknown plot type requested");
+            error("Unknown plot type requested");
     end
 end

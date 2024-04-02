@@ -21,7 +21,6 @@ function z = prox_ln(x, t, norm, b)
         case 'L2' % Compute prox of L2 norm
             z = l2squaredProx(x(:, :, 1) - b, t) + b; % Check this
         otherwise % Change to throw error
-            disp("Error in prox_ln: Unrecognized norm specified.");
-            return
+            error("Unrecognized norm specified.");
     end
 end
