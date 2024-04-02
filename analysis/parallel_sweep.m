@@ -1,4 +1,4 @@
-% parallel_sweep
+% parallel_sweep.m
 %
 % Performs a sweep of the three model hyperparameters, utilizing MATLAB's
 % parallelization toolbox. Requires that the parallel computing toolbox be
@@ -10,64 +10,109 @@
 clear; clc; close all;
 
 %% Parameters
-n = 100; % Number of parameters to sweep in each direction
+n = 4; % Number of parameters to sweep in each direction
 k = 3; % The number of parameters to sweep, each algorithm has 3 parameters
 
-lb_1 = 0; % Lower bound on parameter one
-ub_1 = 0; % Upper bound on parameter one
+lb_1 = 1e-11; % Lower bound on parameter one
+ub_1 = 2; % Upper bound on parameter one
 
-lb_2 = 0; % Lower bound on parameter two
-ub_2 = 0; % Upper bound on parameter two
+lb_2 = 1e-11; % Lower bound on parameter two
+ub_2 = 2; % Upper bound on parameter two
 
-lb_3 = 0; % Lower bound on parameter three
-ub_3 = 0; % Upper bound on parameter three
+lb_3 = 1e-11; % Lower bound on parameter three
+ub_3 = 2; % Upper bound on parameter three
 
 % Parallelization
-n_pool = 14; % Number of processes to allow
+n_pool = 4; % Number of processes to allow
 
 % Algorithm
 alg = 'primal_dr'; % Algorithm name
-p_def = struct(); % Basic parameter structure to base sweep on
-p_def.regularization = 'L1';
-p_def.verbose = 0;
-p_def.default = 0;
-p_def.save_iters = 0;
+p = struct(); % Basic parameter structure to base sweep on
+p.regularization = 'L1';
+p.verbose = false;
+p.display = false;
+p.save_iters = false;
 
 %% Blur image
-I = impopt_scale('cameraman.jpg'); % Import image, convert to B&W with pixels in [0,1]
+I_true = imopt_scale('cameraman.jpg'); % Import image, convert to B&W with pixels in [0,1]
 
 kernel = fspecial('gaussian', [15,15], 5); % Define blur
-b = imfilter(I,kernel); % Apply blur
+b = imfilter(I_true, kernel); % Apply blur
 
 noiseDensity = 0.1; % Define noise density
 b = imnoise(b, 'salt & pepper', noiseDensity); % Apply noise
 
+b = cat(3, b, I_true);
+
 %% Define params to sweep
-params = cell(1, n^3);
+p1 = linspace(lb_1, ub_1, n); % Values for parameter 1
+p2 = linspace(lb_2, ub_2, n); % Values for parameter 2
+p3 = linspace(lb_3, ub_3, n); % Values for parameter 3
 
 %% Run sweep
 myPool = parpool(n_pool); % Initialize parallel environments
+idx = 1; % Index parallel calls
 
-for i=1:length(params) % Initialize parallel calls
-    f_opt(i) = parfeval(myPool, @imopt, 3, b, kernel, alg, params{i}); % <- These start running immediately on parfeval call
+% Initialize parallel calls
+for i=1:n % Sweep values of parameter 1
+    for j=1:n % Sweep values of parameter 2
+        for k=1:n % Sweep values of parameter 3
+            % Assign parameter values
+            if isequal(alg, 'chambolle_pock') % Handle two cases with different parameter names
+                p.t = p1(i);
+                p.s = p2(j);
+                p.gamma = p3(k);
+            else
+                p.t = p1(i);
+                p.gamma = p2(j);
+                p.rho = p3(k);
+            end
+
+            f_opt(idx) = parfeval(myPool, @imopt, 3, b, kernel, alg, p); % <- These start running immediately on parfeval call
+            idx = idx + 1;
+        end
+    end
 end
 
 %% Analyze Outputs
-e_best = NaN; % Set initial best error to be high
+es = zeros(n, n, n); % Store error for each parameter combination
+ts = zeros(n, n, n); % Store computation time for each parameter combination
 
-for i=1:length(params) % Loop through all iterates
+e_best = 1000; % Set initial best error to be high
+
+for i=1:length(f_opt) % Loop through all iterates
     % Fetch outputs, note that the first output is an index, appended by the parfeval function
-    [~, ~, e_i, D_i] = fetchNext(f_opt); % <- This does not wait for all f_opt(i) to run! It processes them as they become available.
+    [~, x, e_i, D_i] = fetchNext(f_opt); % <- This does not wait for all f_opt(i) to run! It processes them as they become available.
+    
+    if isequal(alg, 'chambolle_pock') % Extract parameters of current run
+        p1_ind = find(p1 == D_i.inputs.t);
+        p2_ind = find(p2 == D_i.inputs.s);
+        p3_ind = find(p3 == D_i.inputs.gamma);
+    else
+        p1_ind = find(p1 == D_i.inputs.t);
+        p2_ind = find(p2 == D_i.inputs.gamma);
+        p3_ind = find(p3 == D_i.inputs.rho);
+    end
+    
+    % Save performance metrics
+    es(p1_ind, p2_ind, p3_ind) = D_i.e_end;
+    ts(p1_ind, p2_ind, p3_ind) = D_i.t;
 
-    if e_i < e_best % If better performance is obtained keep this model
+    if e_i < e_best || i == 1 % If better performance is obtained keep this model
         D_best = D_i;
+        e_best = e_i;
     end
 end
 
 %% Print best image
 imopt_display(D_best, 'Error Evolution');
 imopt_display(D_best, 'Convergence');
-imopt_display(D_best, 'Image Iterates', 1);
+if p.save_iters % If iterates were saved
+    imopt_display(D_best, 'Image Iterates', 1);
+end
 
 figure('Name', 'Deblurred Image');
 imshow(D_best.xf, []);
+
+%% Delete pool
+delete(gcp('nocreate'));
