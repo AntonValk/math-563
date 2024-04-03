@@ -20,11 +20,7 @@ ma=min(A(:));
 MA=max(A(:)); 
 mb=min(B(:)); 
 MB=max(B(:));
-% For sensorimotor variables, in [-pi,pi] 
-% ma=-pi; 
-% MA=pi; 
-% mb=-pi; 
-% MB=pi;
+
 % Scale and round to fit in {0,...,L-1} 
 A=round((A-ma)*(L-1)/(MA-ma+eps)); 
 B=round((B-mb)*(L-1)/(MB-mb+eps)); 
