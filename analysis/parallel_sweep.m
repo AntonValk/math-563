@@ -23,7 +23,8 @@ lb_3 = 1e-11; % Lower bound on parameter three
 ub_3 = 2; % Upper bound on parameter three
 
 % Parallelization
-n_pool = 4; % Number of processes to allow
+%n_pool = 16; % Number of processes to allow. Chosen from benchmarking on a 24 core computer
+n_pool = 8; % Number of processes to allow
 
 % Algorithm
 alg = 'primal_dr'; % Algorithm name
