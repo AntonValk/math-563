@@ -10,7 +10,7 @@
 clear; clc; close all;
 
 %% Parameters
-n = 2; % Number of parameters to sweep in each direction
+n = 10; % Number of parameters to sweep in each direction
 k = 3; % The number of parameters to sweep, each algorithm has 3 parameters
 
 lb_1 = 1e-11; % Lower bound on parameter one
@@ -99,7 +99,7 @@ for i=1:length(f_opt) % Loop through all iterates
     % Save performance metrics
     f_i = D_i.fk(end);
 
-    fs(p1_ind, p2_ind, p3_ind) = f_i
+    fs(p1_ind, p2_ind, p3_ind) = f_i;
     es(p1_ind, p2_ind, p3_ind) = D_i.e_end;
     ts(p1_ind, p2_ind, p3_ind) = D_i.t;    
 
