@@ -12,11 +12,8 @@
 % Date: 01-04-2024
 
 function M = deblur_movie(D)
-    reset(groot); % Reset ploting parameters
     % Set plotting parameters
-    set(groot, 'defaultAxesTickLabelInterpreter','latex');
-    set(groot, 'defaultLegendInterpreter','latex');
-    set(groot, 'defaultTextInterpreter', 'latex');
+    set_plotting_parameters(0, 1); % Only set text to latex
 
     % Extract vectors to plot
     xk = D.xk;

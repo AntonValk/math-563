@@ -14,12 +14,7 @@ function conv_rate(D)
     e_t = D.e_end;
 
     % Set plotting parameters
-    set(groot, 'defaultAxesTickLabelInterpreter','latex');
-    set(groot, 'defaultLegendInterpreter','latex');
-    set(groot, 'defaultTextInterpreter', 'latex');
-    set(groot,'DefaultLineLineWidth',2);
-    set(groot,'DefaultContourLineWidth',1.5);
-    set(groot,'DefaultFunctionContourLineWidth',2);
+    set_plotting_parameters(1, 1); % Set text and line width
     
     iterations = linspace(1, length(e), length(e));
 
