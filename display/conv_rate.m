@@ -1,6 +1,6 @@
 % conv_rate.m
 %
-% Plots convergence rate of algorithm versus iterations.
+% Plots convergence rate of algorithm, based on the error metric, versus iterations.
 %
 % Inputs:
 %   D: The output structure of an imopt optimization. [struct]
@@ -19,7 +19,7 @@ function conv_rate(D)
     iterations = linspace(1, length(e), length(e));
 
     % Make plot
-    figure('Name', 'Convergence Rates');
+    figure('Name', 'Convergence Rates - Error');
     tiledlayout(1, 2);
     
     nexttile; % Plot semi-log of error
@@ -37,12 +37,12 @@ function conv_rate(D)
     loglog(iterations, e);
     hold on;
     yline(e_t, '--r')
-    title("\textbf{log(Error Evolution) vs. log(Iterations)}");
+    title("\textbf{log($\epsilon$) vs. log(Iterations)}");
     xlabel("log(Iteration)");
-    ylabel("log(Error)");
+    ylabel("log($\epsilon$)");
     legend('', 'Error Threshold');
     grid on;
     hold off;
 
-    reset(groot); % Reset ploting parameters
+    reset(groot); % Reset plotting parameters
 end    

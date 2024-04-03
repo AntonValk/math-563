@@ -10,7 +10,7 @@
 clear; clc; close all;
 
 %% Parameters
-n = 3; % Number of parameters to sweep in each direction
+n = 2; % Number of parameters to sweep in each direction
 k = 3; % The number of parameters to sweep, each algorithm has 3 parameters
 
 lb_1 = 1e-11; % Lower bound on parameter one
@@ -23,8 +23,8 @@ lb_3 = 1e-11; % Lower bound on parameter three
 ub_3 = 2; % Upper bound on parameter three
 
 % Parallelization
-%n_pool = 16; % Number of processes to allow. Chosen from benchmarking on a 24 core computer
-n_pool = 8; % Number of processes to allow
+n_pool = 16; % Number of processes to allow. Chosen from benchmarking on a 24 core computer
+%n_pool = 8; % Number of processes to allow. Use this for your PCs! Or maybe even lower, check your system info.
 
 % Algorithm
 alg = 'primal_dr'; % Algorithm name
@@ -37,7 +37,7 @@ p.save_iters = false;
 %% Blur image
 I_true = imopt_scale('cameraman.jpg'); % Import image, convert to B&W with pixels in [0,1]
 
-kernel = fspecial('gaussian', [15,15], 5); % Define blur
+kernel = fspecial('gaussian', [9,9], 4); % Define blur
 b = imfilter(I_true, kernel); % Apply blur
 
 noiseDensity = 0.1; % Define noise density
@@ -76,10 +76,11 @@ for i=1:n % Sweep values of parameter 1
 end
 
 %% Analyze Outputs
+fs = zeros(n, n, n); % Store loss for each parameter combination
 es = zeros(n, n, n); % Store error for each parameter combination
 ts = zeros(n, n, n); % Store computation time for each parameter combination
 
-e_best = 1000; % Set initial best error to be high
+f_best = Inf; % Set initial best loss to be high
 
 for i=1:length(f_opt) % Loop through all iterates
     % Fetch outputs, note that the first output is an index, appended by the parfeval function
@@ -96,12 +97,15 @@ for i=1:length(f_opt) % Loop through all iterates
     end
     
     % Save performance metrics
-    es(p1_ind, p2_ind, p3_ind) = D_i.e_end;
-    ts(p1_ind, p2_ind, p3_ind) = D_i.t;
+    f_i = D_i.fk(end);
 
-    if e_i < e_best || i == 1 % If better performance is obtained keep this model
+    fs(p1_ind, p2_ind, p3_ind) = f_i
+    es(p1_ind, p2_ind, p3_ind) = D_i.e_end;
+    ts(p1_ind, p2_ind, p3_ind) = D_i.t;    
+
+    if f_i < f_best % If better performance is obtained keep this model
         D_best = D_i;
-        e_best = e_i;
+        f_best = f_i;
         ind_best = [p1_ind, p2_ind, p3_ind]; % Save indexes corresponding to best parameters
     end
 end
@@ -111,21 +115,21 @@ gamma_best = zeros(n, n); % Store best value of gamma
 
 for i=1:n % Parse all t values
     for k=1:n % Parse all rho values
-        [~, idx] = min(es(i, :, k));
+        [~, idx] = min(fs(i, :, k));
         gamma_best(i, k) = p2(idx); % Find best gamma value
     end
 end
 
 set_plotting_parameters(1, 0); % Set text interpreter to latex
 
-% Plot error vs t & rho with fixed gamma -> Problem sensitivity to step-sizes
-figure('Name', 'Error vs step-size: Fixed gamma');
-surf(p1, p3, squeeze(es(:, ind_best(2), :)));
+% Plot loss vs t & rho with fixed gamma -> Problem sensitivity to step-sizes
+figure('Name', 'Loss vs step-size: Fixed gamma');
+surf(p1, p3, squeeze(fs(:, ind_best(2), :)));
 hold on;
-title("\textbf{Error vs Step-size \& Relaxation Parameter - $\gamma$ fixed}");
+title("\textbf{Loss vs Step-size \& Relaxation Parameter - $\gamma$ fixed}");
 xlabel("$t$ - Step Size");
 ylabel("$\rho$ - Relaxation Parameter");
-zlabel("$\epsilon$");
+zlabel("$f(x^{(k)}$");
 grid on;
 colorbar;
 hold off;
@@ -144,7 +148,10 @@ hold off;
 
 %% Print best image
 imopt_display(D_best, 'Error Evolution');
+imopt_display(D_best, 'Loss Evolution');
 imopt_display(D_best, 'Convergence');
+imopt_display(D_best, 'Loss Convergence');
+
 if p.save_iters % If iterates were saved
     imopt_display(D_best, 'Image Iterates', 1);
 end

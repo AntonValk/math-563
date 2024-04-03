@@ -197,6 +197,15 @@ function varargout = imopt(b, kernel, alg, p_in)
 
     disp("==================Deblurring Completed==================");
 
+    % Compile outputs
+    D.inputs = params;
+    D.inputs.b = b;
+    if exist('x_true')
+        D.inputs.x_true = x_true;
+    end
+    D.inputs.alg_name = alg_name;
+    D.inputs.kernel = kernel;
+
     % Print outputs
     if params.verbose
         disp("Deblurring algorithm completed successfully.");
@@ -211,20 +220,18 @@ function varargout = imopt(b, kernel, alg, p_in)
             disp("Thanks for using IMOPT, have a great day!");
         end
     end
-    
+
     % Display output plots
     if params.display
         imopt_display(D, 'Error Evolution');
+        imopt_display(D, 'Loss Evolution');
         imopt_display(D, 'Convergence');
+        imopt_display(D, 'Loss Convergence');
         if params.save_iters
             imopt_display(D, 'Image Iterates', 1);
         end
     end
     
-    % Compile outputs
-    D.inputs = params;
-    D.inputs.alg_name = alg_name;
-
     varargout = cell(1, nargout);
 
     switch nargout % Create outputs and return

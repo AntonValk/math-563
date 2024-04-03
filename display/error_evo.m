@@ -1,6 +1,6 @@
 % error_evo.m
 %
-% Plots error evolution versus iterations.
+% Plots error versus iterations.
 %
 % Inputs:
 %   D: The output structure of an imopt optimization. [struct]
@@ -29,5 +29,5 @@ function error_evo(D)
     grid on;
     hold off;
 
-    reset(groot); % Reset ploting parameters
+    reset(groot); % Reset plotting parameters
 end    

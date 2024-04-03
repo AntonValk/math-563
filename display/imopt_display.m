@@ -17,6 +17,10 @@ function imopt_display(D, plot, n)
             error_evo(D);
         case 'Convergence' % Make plot of convergence
             conv_rate(D);
+        case 'Loss Evolution' % Plot loss vs iterates
+            loss_evo(D);
+        case 'Loss Convergence' % Make plots of convergence wrt loss
+            loss_conv_rate(D);
         case 'Image Iterates' % Make and play movie
             M = deblur_movie(D); % Make Movie
 
