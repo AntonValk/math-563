@@ -8,13 +8,14 @@
 %   b: The blurred image. [m x n Matrix]
 %   kernel: The kernel used to blur the image. [k x k Matrix]
 %   x_init: The initial guess for the deblurred image. [m x n Matrix]
-%   prox_l: A method to compute the proximal operator for the regularization term. [Function Handle]
-%   t: Step size. [Double]
+%   f: A structure containing several function handles:
+%       prox_l: A method to compute the proximal operator for the regularization term. [Function Handle]
+%       err_eval: A function evaluate the image error at the current iteration. [Function Handle]
+%       f_loss: A function that evaluates the loss function for an image. [Function Handle]%   t: Step size. [Double]
 %   s: Step size. [Double]
 %   g: The constant modifying the iso-norm in the problem statement. [Double]
 %   k_max: Maximum number of iterations. [Integer]
 %   e_t: Error threshold. [Double]
-%   err_eval: A function evaluate the image error at the current iteration. [Function Handle]
 %   save: A boolean, indicating whether the image iterates should be saved. [Logical]
 %   verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
 %
@@ -25,6 +26,7 @@
 %       k_end: The number of iterations ran. [Integer]
 %       e_end: Error at the final iteration. [Double]
 %       ek: Error at each iteration [1 x k_end Matrix]
+%       fk: Loss at each iteration [1 x k_end Matrix]
 %       xk: The image at each iteration [m x n x k_end Matrix] (Only output if save is true)
 %
 % Authors: Linda Hu, Cheng Shou, April Niu, Aidan Gerkis
@@ -34,11 +36,12 @@
 %   [1]: C. Paquette, "MATH 463/563 - Convex Optimization, Project Description" 
 %        in MATH 564 - Honours Convex Optimization.
 
-function D = chambolle_pock(b, kernel, x_init, prox_l, t, s, g, k_max, e_t, err_eval, save, verbose)
+function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, verbose)
     [numRows, numCols]=size(b);
     
     % Arrays to store outputs
     errors = zeros(1, k_max);
+    loss = zeros(1, k_max);
     if save % Save images at each step only if requested
         xks = zeros(numRows, numCols, k_max);
     end
@@ -60,7 +63,7 @@ function D = chambolle_pock(b, kernel, x_init, prox_l, t, s, g, k_max, e_t, err_
         wk = yk + s*[mat_mult(zk, 'K', kernel); mat_mult(zk, 'D1', kernel); mat_mult(zk, 'D2', kernel)]; % Input to prox of g
         wk = mat_split(wk, 3); % Convert from 2D -> 3D tensor
         
-        yk1 = wk(:, :, 1) - s*prox_l(wk(:, :, 1)/s, 1/s); % Part one of prox of sg*
+        yk1 = wk(:, :, 1) - s*f.prox_l(wk(:, :, 1)/s, 1/s); % Part one of prox of sg*
         yk2 = wk(:, :, 2:3) - (s*g)*isoProx(wk(:, :, 2:3)/(s*g), 1/(s*g)); % Part two of prox of sg*
     
         yk = [yk1; yk2(:, :, 1); yk2(:, :, 2)]; % Compile components of prox of sg*
@@ -75,18 +78,21 @@ function D = chambolle_pock(b, kernel, x_init, prox_l, t, s, g, k_max, e_t, err_
         zk = 2*xk - xk_old;
     
         % Update error
-        error = err_eval(xk);
+        error = f.err_eval(xk);
     
         % Save variables
         errors(k) = error;
-    
+        loss(k) = f.f_loss(xk);
+
         if save % Save images at each step only if requested
             xks(:, :, k) = xk;
         end
     
         % Print status
         if verbose
-            disp("Finished iteration " + num2str(k) + " with loss: " + error);
+            disp("Finished iteration " + num2str(k) + " with: ");
+            disp("  error: " + num2str(error));
+            disp("  loss: " + num2str(loss(k)));
         end
     
         % Update iteration
@@ -101,7 +107,8 @@ function D = chambolle_pock(b, kernel, x_init, prox_l, t, s, g, k_max, e_t, err_
     D.k_end = k-1; % Number of iterations
     D.e_end = errors(k-1); % Error at end
     D.ek = errors(1:D.k_end); % Error vs time
-    
+    D.fk = loss(1:D.k_end); % Loss vs iteration
+
     if save % Save image at each iteration vs. time if requested
         D.xk = xks(:, :, 1:D.k_end);
     end

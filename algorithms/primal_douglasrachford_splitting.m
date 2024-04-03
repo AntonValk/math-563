@@ -8,13 +8,14 @@
 %   b: The blurred image. [m x n Matrix]
 %   kernel: The kernel used to blur the image. [k x k Matrix]
 %   x_init: The initial guess for the deblurred image. [m x n Matrix]
-%   prox_l: A method to compute the proximal operator for the regularization term. [Function Handle]
-%   t: Step size. [Double]
+%   f: A structure containing several function handles:
+%       prox_l: A method to compute the proximal operator for the regularization term. [Function Handle]
+%       err_eval: A function evaluate the image error at the current iteration. [Function Handle]
+%       f_loss: A function that evaluates the loss function for an image. [Function Handle]%   t: Step size. [Double]
 %   g: The constant modifying the iso-norm. [Double]
 %   rho: Regularization parameter. [Double]
 %   k_max: Maximum number of iterations. [Integer]
 %   e_t: Error threshold. [Double]
-%   err_eval: A function evaluate the image error at the current iteration. [Function Handle]
 %   save: A boolean, indicating whether the image iterates should be saved. [Logical]
 %   verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
 %
@@ -25,6 +26,7 @@
 %       k_end: The number of iterations ran. [Integer]
 %       e_end: Error at the final iteration. [Double]
 %       ek: Error at each iteration [1 x k_end Matrix]
+%       fk: Loss at each iteration [1 x k_end Matrix]
 %       xk: The image at each iteration [m x n x k_end Matrix] (Only output if save is true)
 %
 % Authors: Linda Hu, Cheng Shou, April Niu, Aidan Gerkis
@@ -34,11 +36,12 @@
 %   [1]: C. Paquette, "MATH 463/563 - Convex Optimization, Project Description" 
 %        in MATH 564 - Honours Convex Optimization.
 
-function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_l, t, g, rho, k_max, e_t, err_eval, save, verbose)
+function D = primal_douglasrachford_splitting(b, kernel, x_init, f, t, g, rho, k_max, e_t, save, verbose)
     [numRows, numCols]=size(b);
     
     % Arrays to store outputs
     errors = zeros(1, k_max);
+    loss = zeros(1, k_max);
     if save % Save images at each step only if requested
         xk = zeros(numRows, numCols, k_max);
     end
@@ -57,7 +60,7 @@ function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_l, t, g, r
 
         % Compute prox ops
         x = boxProx(z1k); % Prox of indicator
-        y1 = prox_l(z2(:, :, 1), t); % Prox of regularization norm
+        y1 = f.prox_l(z2(:, :, 1), t); % Prox of regularization norm
         y2 = isoProx(z2(:, :, 2:3), t*g); % Prox of isoNorm
     
         % Compute resolvent of B
@@ -73,19 +76,21 @@ function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_l, t, g, r
         z2k = z2k + rho*(v - y);
         
         % Update error
-        %% TODO: ERROR UPDATE <- put this in the right spot
-        error = err_eval(x);
+        error = f.err_eval(x);
 
         % Save variables
         errors(k) = error;
-        
+        loss(k) = f.f_loss(x);
+
         if save % Save images at each step only if requested
-            xk(:, :, k) = x;
+            xks(:, :, k) = xk;
         end
-        
+    
         % Print status
         if verbose
-            disp("Finished iteration " + num2str(k) + " with loss: " + error);
+            disp("Finished iteration " + num2str(k) + " with: ");
+            disp("  error: " + num2str(error));
+            disp("  loss: " + num2str(loss(k)));
         end
 
         % Update iteration
@@ -100,7 +105,8 @@ function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_l, t, g, r
     D.k_end = k-1; % Number of iterations
     D.e_end = errors(k-1); % Error at end
     D.ek = errors(1:D.k_end); % Error vs time
-    
+    D.fk = loss(1:D.k_end); % Loss vs iteration
+
     if save % Save image at each iteration vs. time if requested
         D.xk = xk(:, :, 1:D.k_end);
     end

@@ -131,41 +131,47 @@ function varargout = imopt(b, kernel, alg, p_in)
     end
     
     %% TODO: How to handle different error metrics....
-    % Build error metric function
-    err_eval = @(x_hat) imopt_rmse(x_true, x_hat);
 
     if params.verbose
         disp("================Parsing Input Parameters================");
     end
+    
+    f_handles = struct(); % Compile all functions into structure
+
+    % Build error metric function
+    f_handles.err_eval = @(x_hat) imopt_rmse(x_true, x_hat);
+
+    % Build loss function
+    f_handles.f_loss = @(x)imopt_loss(x, b, params.gamma, params.regularization, kernel);
 
     % Build generic function handle for prox of regularization function
-    prox_l = @(x, t) prox_ln(x, t, params.regularization, b);
+    f_handles.prox_l = @(x, t) prox_ln(x, t, params.regularization, b);
 
     % Build function handle for algorithm & structure to store inputs    
     switch alg
         case 'primal_dr'
-            deblur = @(im)primal_douglasrachford_splitting(im, kernel, params.x_init, prox_l, params.t, params.gamma, params.rho, params.max_iter, params.e_t, err_eval, params.save_iters, params.verbose);
+            deblur = @(im)primal_douglasrachford_splitting(im, kernel, params.x_init, f_handles, params.t, params.gamma, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile parameters for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Primal Douglas-Rachford Splitting";
         case 'primaldual_dr'
-            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.x_init, prox_l, params.t, params.gamma, params.rho, params.max_iter, params.e_t, err_eval, params.save_iters, params.verbose);
+            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.x_init, f_handles, params.t, params.gamma, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
 
             % Compile parameters for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Primal-Dual Douglas-Rachford Splitting";
         case 'admm'
-            deblur = @(im)admm(im, kernel, params.x_init, prox_l, params.t, params.rho, params.gamma, params.max_iter, params.e_t, err_eval, params.save_iters, params.verbose);
+            deblur = @(im)admm(im, kernel, params.x_init, f_handles, params.t, params.rho, params.gamma, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Alternating Direction Method of Multipliers";
         case 'chambolle_pock'
-            deblur = @(im)chambolle_pock(im, kernel, params.x_init, prox_l, params.t, params.s, params.gamma, params.max_iter, params.e_t, err_eval, params.save_iters, params.verbose);
+            deblur = @(im)chambolle_pock(im, kernel, params.x_init, f_handles, params.t, params.s, params.gamma, params.max_iter, params.e_t, params.save_iters, params.verbose);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
@@ -197,6 +203,7 @@ function varargout = imopt(b, kernel, alg, p_in)
         disp("Total Time: " + num2str(D.t) + " s");
         disp("Total Iterations: " + num2str(D.k_end));
         disp("Final Error: " + num2str(D.e_end));
+        disp("Final Loss: " + num2str(D.fk(end)));
 
         if rand >= 0.05
             disp("IMOPT - Math 563 Final Project");

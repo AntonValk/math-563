@@ -8,13 +8,15 @@
 %   b: The blurred image. [m x n Matrix]
 %   kernel: The kernel used to blur the image. [k x k Matrix]
 %   x_init: The initial guess for the deblurred image. [m x n Matrix]
-%   prox_l: A method to compute the proximal operator for the regularization term. [Function Handle]
+%   f: A structure containing several function handles:
+%       prox_l: A method to compute the proximal operator for the regularization term. [Function Handle]
+%       err_eval: A function evaluate the image error at the current iteration. [Function Handle]
+%       f_loss: A function that evaluates the loss function for an image. [Function Handle]
 %   t: Step size. [Double]
 %   g: The constant modifying the iso-norm. [Double]
 %   rho: Regularization parameter. [Double]
 %   k_max: Maximum number of iterations. [Integer]
 %   e_t: Error threshold. [Double]
-%   err_eval: A function evaluate the image error at the current iteration. [Function Handle]
 %   save: A boolean, indicating whether the image iterates should be saved. [Logical]
 %   verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
 %
@@ -25,6 +27,7 @@
 %       k_end: The number of iterations ran. [Integer]
 %       e_end: Error at the final iteration. [Double]
 %       ek: Error at each iteration [1 x k_end Matrix]
+%       fk: Loss at each iteration [1 x k_end Matrix]
 %       xk: The image at each iteration [m x n x k_end Matrix] (Only output if save is true)
 %
 % Authors: Linda Hu, Cheng Shou, April Niu
@@ -34,11 +37,12 @@
 %   [1]: C. Paquette, "MATH 463/563 - Convex Optimization, Project Description" 
 %        in MATH 564 - Honours Convex Optimization.
 
-function D = admm(b, kernel, x_init, prox_l, t, rho, g, k_max, e_t, err_eval, save, verbose)
+function D = admm(b, kernel, x_init, f, t, rho, g, k_max, e_t, save, verbose)
     [numRows, numCols]=size(b);
     
     % Arrays to store outputs
     errors = zeros(1, k_max);
+    loss = zeros(1, k_max);
     if save % Save images at each step only if requested
         xks = zeros(numRows, numCols, k_max);
     end
@@ -71,7 +75,7 @@ function D = admm(b, kernel, x_init, prox_l, t, rho, g, k_max, e_t, err_eval, sa
         % Compute prox ops
         uk = boxProx(rho*xk + (1-rho)*uk + wk/t); % Prox of f/t
         
-        y1 = prox_l(rho*ax(:,:,1) + (1-rho)*y1 + z1/t, 1/t); % Part 1 of prox g/t
+        y1 = f.prox_l(rho*ax(:,:,1) + (1-rho)*y1 + z1/t, 1/t); % Part 1 of prox g/t
         y_aux = isoProx(rho*ax(:,:,2:3) + (1-rho)*yk(:,:,2:3) + zk(:,:,2:3)/t, g/t); % Part 2 of prox g/t
     
         % Compute Updates
@@ -81,18 +85,21 @@ function D = admm(b, kernel, x_init, prox_l, t, rho, g, k_max, e_t, err_eval, sa
         z3 = z3 + t * (mat_mult(xk, 'D2', kernel) - y_aux(:,:,2));
     
         % Update error
-        error = err_eval(xk);
-    
+        error = f.err_eval(xk);
+        
         % Save variables
         errors(k) = error;
-    
+        loss(k) = f.f_loss(xk);
+
         if save % Save images at each step only if requested
             xks(:, :, k) = xk;
         end
     
         % Print status
         if verbose
-            disp("Finished iteration " + num2str(k) + " with loss: " + error);
+            disp("Finished iteration " + num2str(k) + " with: ");
+            disp("  error: " + num2str(error));
+            disp("  loss: " + num2str(loss(k)));
         end
     
         % Update iteration
@@ -107,8 +114,9 @@ function D = admm(b, kernel, x_init, prox_l, t, rho, g, k_max, e_t, err_eval, sa
     D.t = t_run; % Run time
     D.k_end = k-1; % Number of iterations
     D.e_end = errors(k-1); % Error at end
-    D.ek = errors(1:D.k_end); % Error vs time
-    
+    D.ek = errors(1:D.k_end); % Error vs iteration
+    D.fk = loss(1:D.k_end); % Loss vs iteration
+
     if save % Save image at each iteration vs. time if requested
         D.xk = xks(:, :, 1:D.k_end);
     end
