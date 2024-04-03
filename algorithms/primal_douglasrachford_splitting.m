@@ -95,7 +95,7 @@ function D = primal_douglasrachford_splitting(b, kernel, x_init, prox_l, t, g, r
 
     % Compile outputs
     D = struct();
-    D.xf = boxProx(z1k); % Solution
+    D.xf = x; % Solution
     D.t = t_run; % Run time
     D.k_end = k-1; % Number of iterations
     D.e_end = errors(k-1); % Error at end

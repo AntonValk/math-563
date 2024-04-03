@@ -71,7 +71,6 @@ function D = chambolle_pock(b, kernel, x_init, prox_l, t, s, g, k_max, e_t, err_
         
         xk = boxProx(vk); % Prox of tf
        
-    
         % Update zk
         zk = 2*xk - xk_old;
     

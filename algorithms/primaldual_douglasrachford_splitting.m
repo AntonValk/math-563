@@ -79,7 +79,7 @@ function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, prox_l, t,
         qk = qk + rho*(vk - zk); % 3n x n matrix
     
         % Update error
-        error = err_eval(x);
+        error = err_eval(xk);
     
         % Save variables
         errors(k) = error;
@@ -100,7 +100,7 @@ function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, prox_l, t,
     
     % Compile outputs
     D = struct();
-    D.xf = boxProx(pk); % Solution
+    D.xf = xk; % Solution
     D.t = t_run; % Run time
     D.k_end = k-1; % Number of iterations
     D.e_end = errors(k-1); % Error at end

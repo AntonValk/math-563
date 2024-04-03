@@ -151,21 +151,21 @@ function varargout = imopt(b, kernel, alg, p_in)
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Primal Douglas-Rachford Splitting";
         case 'primaldual_dr'
-            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.x_init, prox_l, params.t, params.gamma, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
+            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.x_init, prox_l, params.t, params.gamma, params.rho, params.max_iter, params.e_t, err_eval, params.save_iters, params.verbose);
 
             % Compile parameters for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Primal-Dual Douglas-Rachford Splitting";
         case 'admm'
-            deblur = @(im)admm(im, kernel, params.x_init, prox_l, params.t, params.rho, params.gamma, params.max_iter, params.e_t, params.save_iters, params.verbose);
+            deblur = @(im)admm(im, kernel, params.x_init, prox_l, params.t, params.rho, params.gamma, params.max_iter, params.e_t, err_eval, params.save_iters, params.verbose);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Alternating Direction Method of Multipliers";
         case 'chambolle_pock'
-            deblur = @(im)chambolle_pock(im, kernel, params.x_init, prox_l, params.t, params.s, params.gamma, params.max_iter, params.e_t, params.save_iters, params.verbose);
+            deblur = @(im)chambolle_pock(im, kernel, params.x_init, prox_l, params.t, params.s, params.gamma, params.max_iter, params.e_t, err_eval, params.save_iters, params.verbose);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);

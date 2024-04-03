@@ -59,28 +59,29 @@ function D = admm(b, kernel, x_init, prox_l, t, rho, g, k_max, e_t, err_eval, sa
     
     tic; % Start Timer
     while error > e_t && k < k_max % Iterate until error convergence or max iterations has been exceeded
+        % Compute inputs to prox op calculations
         atz = mat_mult(z1, 'KT', kernel) + mat_mult(z2, 'D1T', kernel) + mat_mult(z3, 'D2T', kernel); %(A^t z)
         aty = mat_mult(y1, 'KT', kernel) + mat_mult(y2, 'D1T', kernel) + mat_mult(y3, 'D2T', kernel); %(A^t y)
-        xk = mat_mult(uk + aty - (1/t)*(wk + atz), 'inv', kernel, 1); %
-    
+        xk = mat_mult(uk + aty - (1/t)*(wk + atz), 'inv', kernel, 1); % 
+
+        ax = mat_split([mat_mult(xk, 'K', kernel); mat_mult(xk, 'D1', kernel); mat_mult(xk, 'D2', kernel)], 3); % Compute Ax and convert 2D -> 3D
+        yk = mat_split([y1; y2; y3], 3); % Convert 2D -> 3D
+        zk = mat_split([z1; z2; z3], 3); % Convert 2D -> 3D
+
         % Compute prox ops
-        uk = boxProx(rho*xk + (1-rho)*uk + wk/t);
-        w = mat_split([mat_mult(xk, 'K', kernel); mat_mult(xk, 'D1', kernel); mat_mult(xk, 'D2', kernel)], 3);
-        yk = mat_split([y1; y2; y3], 3);
-        zk = mat_split([z1; z2; z3], 3);
-        % unsure about the +/-b and */t for the two prox operators.
-        y1 = prox_l(rho* w(:,:,1) + (1-rho)*y1+z1/t,1/t); % From Equation 8 in the reference
-        y_aux = isoProx(rho*w(:,:,2:3) + (1-rho)*yk(:,:,2:3) + zk(:,:,2:3)/t, g/t);
-        %yk = [y1; y_aux(:,:,1); y_aux(:,:,2)];
+        uk = boxProx(rho*xk + (1-rho)*uk + wk/t); % Prox of f/t
+        
+        y1 = prox_l(rho*ax(:,:,1) + (1-rho)*y1 + z1/t, 1/t); % Part 1 of prox g/t
+        y_aux = isoProx(rho*ax(:,:,2:3) + (1-rho)*yk(:,:,2:3) + zk(:,:,2:3)/t, g/t); % Part 2 of prox g/t
     
         % Compute Updates
         wk = wk + t*(xk-uk);
-        z1 = z1 + t * (mat_mult(xk, 'K', kernel) - y1);
+        z1 = z1 + t * (mat_mult(xk, 'K', kernel) - y1); % Component-wise update of zk
         z2 = z2 + t * (mat_mult(xk, 'D1', kernel) - y_aux(:,:,1));
         z3 = z3 + t * (mat_mult(xk, 'D2', kernel) - y_aux(:,:,2));
     
         % Update error
-        error = err_eval(x);
+        error = err_eval(xk);
     
         % Save variables
         errors(k) = error;
@@ -97,15 +98,12 @@ function D = admm(b, kernel, x_init, prox_l, t, rho, g, k_max, e_t, err_eval, sa
         % Update iteration
         k = k + 1;
     end
-    atz = mat_mult(z1, 'KT', kernel) + mat_mult(z2, 'D1T', kernel) + mat_mult(z3, 'D2T', kernel); %(A^t z)
-    aty = mat_mult(y1, 'KT', kernel) + mat_mult(y2, 'D1T', kernel) + mat_mult(y3, 'D2T', kernel); %(A^t y)
-    xSol= mat_mult(uk + aty - (1/t)*(wk + atz), 'inv', kernel, 1);
     
     t_run = toc; % End Timer
     
     % Compile outputs
     D = struct();
-    D.xf = xSol; % Solution
+    D.xf = xk; % Solution
     D.t = t_run; % Run time
     D.k_end = k-1; % Number of iterations
     D.e_end = errors(k-1); % Error at end
