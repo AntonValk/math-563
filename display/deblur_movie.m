@@ -13,7 +13,7 @@
 
 function M = deblur_movie(D)
     % Set plotting parameters
-    set_plotting_parameters(0, 1); % Only set text to latex
+    set_plotting_parameters(1, 0); % Only set text to latex
 
     % Extract vectors to plot
     xk = D.xk;
