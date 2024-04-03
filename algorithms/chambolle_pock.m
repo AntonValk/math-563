@@ -43,11 +43,10 @@ function D = chambolle_pock(b, kernel, x_init, prox_l, t, s, g, k_max, e_t, err_
         xks = zeros(numRows, numCols, k_max);
     end
     
-    
     % Initialize
     xk = x_init; % n x n matrix
     zk = x_init; % n x n matrix
-    yk = [mat_mult(xk, 'K', kernel); mat_mult(xk, 'D1', kernel); mat_mult(xk, 'D2', kernel)]; % 3n x n matrix
+    yk = mat_split([mat_mult(xk, 'K', kernel); mat_mult(xk, 'D1', kernel); mat_mult(xk, 'D2', kernel)], 3); % n x n x 3 tensor
     
     k = 1; % Current iteration
     error = e_t*10; % Current error
@@ -55,25 +54,29 @@ function D = chambolle_pock(b, kernel, x_init, prox_l, t, s, g, k_max, e_t, err_
     tic; % Start Timer
     while error > e_t && k < k_max % Iterate until error convergence or max iterations has been exceeded
         xk_old = xk; % Save previous xk
-    
-        % Compute Prox Ops
+        
+        % Compute Prox Op of sg*
+        yk = [yk(:, :, 1); yk(:, :, 2); yk(:, :, 3)]; % Convert from 3D Tensor -> 2D
         wk = yk + s*[mat_mult(zk, 'K', kernel); mat_mult(zk, 'D1', kernel); mat_mult(zk, 'D2', kernel)]; % Input to prox of g
         wk = mat_split(wk, 3); % Convert from 2D -> 3D tensor
-    
-        yk = mat_split(yk, 3); % Convert from 2D -> 3D tensor
-        vk = xk - t*(mat_mult(yk(:, :, 1), 'KT', kernel) + mat_mult(yk(:, :, 2), 'D1T', kernel) + mat_mult(yk(:, :, 3), 'D2T', kernel)); % Input to prox of f
         
-        xk = boxProx(vk); % Prox of tf
         yk1 = wk(:, :, 1) - s*prox_l(wk(:, :, 1)/s, 1/s); % Part one of prox of sg*
         yk2 = wk(:, :, 2:3) - (s*g)*isoProx(wk(:, :, 2:3)/(s*g), 1/(s*g)); % Part two of prox of sg*
     
         yk = [yk1; yk2(:, :, 1); yk2(:, :, 2)]; % Compile components of prox of sg*
+        yk = mat_split(yk, 3); % Convert from 2D -> 3D tensor
+
+        % Compute Prox Op of tf
+        vk = xk - t*(mat_mult(yk(:, :, 1), 'KT', kernel) + mat_mult(yk(:, :, 2), 'D1T', kernel) + mat_mult(yk(:, :, 3), 'D2T', kernel)); % Input to prox of f
+        
+        xk = boxProx(vk); % Prox of tf
+       
     
         % Update zk
         zk = 2*xk - xk_old;
     
         % Update error
-        error = err_eval(x);
+        error = err_eval(xk);
     
         % Save variables
         errors(k) = error;
