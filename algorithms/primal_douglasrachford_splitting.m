@@ -108,7 +108,7 @@ function D = primal_douglasrachford_splitting(b, kernel, x_init, f, t, g, rho, k
     D.fk = loss(1:D.k_end); % Loss vs iteration
 
     if save % Save image at each iteration vs. time if requested
-        D.xk = xk(:, :, 1:D.k_end);
+        D.xk = xks(:, :, 1:D.k_end);
     end
 end 
 
