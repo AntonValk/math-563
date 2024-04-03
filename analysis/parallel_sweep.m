@@ -10,7 +10,7 @@
 clear; clc; close all;
 
 %% Parameters
-n = 4; % Number of parameters to sweep in each direction
+n = 3; % Number of parameters to sweep in each direction
 k = 3; % The number of parameters to sweep, each algorithm has 3 parameters
 
 lb_1 = 1e-11; % Lower bound on parameter one
@@ -102,8 +102,45 @@ for i=1:length(f_opt) % Loop through all iterates
     if e_i < e_best || i == 1 % If better performance is obtained keep this model
         D_best = D_i;
         e_best = e_i;
+        ind_best = [p1_ind, p2_ind, p3_ind]; % Save indexes corresponding to best parameters
     end
 end
+
+% Prepare data for plotting - compute best value of gamma at each (t, rho) pair
+gamma_best = zeros(n, n); % Store best value of gamma
+
+for i=1:n % Parse all t values
+    for k=1:n % Parse all rho values
+        [~, idx] = min(es(i, :, k));
+        gamma_best(i, k) = p2(idx); % Find best gamma value
+    end
+end
+
+set_plotting_parameters(1, 0); % Set text interpreter to latex
+
+% Plot error vs t & rho with fixed gamma -> Problem sensitivity to step-sizes
+figure('Name', 'Error vs step-size: Fixed gamma');
+surf(p1, p3, squeeze(es(:, ind_best(2), :)));
+hold on;
+title("\textbf{Error vs Step-size \& Relaxation Parameter - $\gamma$ fixed}");
+xlabel("$t$ - Step Size");
+ylabel("$\rho$ - Relaxation Parameter");
+zlabel("$\epsilon$");
+grid on;
+colorbar;
+hold off;
+
+% Plot best gamma vs t & rho -> gamma sensitivity to step-size
+figure('Name', 'Best gamma vs step-size');
+surf(p1, p3, gamma_best);
+hold on;
+title("\textbf{Best $\gamma$ vs Step-size \& Relaxation Parameter}");
+xlabel("$t$ - Step Size");
+ylabel("$\rho$ - Relaxation Parameter");
+zlabel("$\gamma_{best}$");
+grid on;
+colorbar;
+hold off;
 
 %% Print best image
 imopt_display(D_best, 'Error Evolution');
