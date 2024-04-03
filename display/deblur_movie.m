@@ -17,13 +17,12 @@ function M = deblur_movie(D)
 
     % Extract vectors to plot
     xk = D.xk;
-    ek = D.ek;
-    e_t = D.e_end;
+    fk = D.fk;
     
-    iterations = linspace(1, length(ek), length(ek));
+    iterations = linspace(1, length(fk), length(fk));
 
     % Make plots
-    for i=1:length(ek) % For each iteration
+    for i=1:length(fk) % For each iteration
         F = figure('visible', 'off');
         tiledlayout(3, 2);
 
@@ -32,13 +31,12 @@ function M = deblur_movie(D)
         title("\textbf{Image at Iteration " + num2str(i) + "}");
         
         nexttile(5, [1, 2]); % Plot error - Span a 1x2 grid
-        plot(iterations(1:i), ek(1:i), 'LineWidth', 2);
+        semilogy(iterations(1:i), fk(1:i), 'LineWidth', 2);
         xlim([0, iterations(end)]);
-        yline(e_t, '--r', 'LineWidth', 2)
-        title("\textbf{Error Evolution vs. Iterations}");
+        ylim([1, max(fk)]);
+        title("\textbf{Loss vs. Iteration}");
         xlabel("Iteration");
-        ylabel("Error");
-        legend('', 'Error Threshold');
+        ylabel("Loss");
         grid on;
 
         M(i) = getframe(F); % Capture figure as a movie frame
