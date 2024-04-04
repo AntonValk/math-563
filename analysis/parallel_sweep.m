@@ -10,7 +10,7 @@
 clear; clc; close all;
 
 %% Parameters
-n = 10; % Number of parameters to sweep in each direction
+n = 25; % Number of parameters to sweep in each direction
 k = 3; % The number of parameters to sweep, each algorithm has 3 parameters
 
 lb_1 = 1e-11; % Lower bound on parameter one
@@ -22,12 +22,14 @@ ub_2 = 2; % Upper bound on parameter two
 lb_3 = 1e-11; % Lower bound on parameter three
 ub_3 = 2; % Upper bound on parameter three
 
+fn_out = "n25-largesweep";
+
 % Parallelization
 n_pool = 16; % Number of processes to allow. Chosen from benchmarking on a 24 core computer
 %n_pool = 8; % Number of processes to allow. Use this for your PCs! Or maybe even lower, check your system info.
 
 % Algorithm
-alg = 'primal_dr'; % Algorithm name
+alg = 'primaldual_dr'; % Algorithm name
 p = struct(); % Basic parameter structure to base sweep on
 p.regularization = 'L1';
 p.verbose = false;
@@ -158,6 +160,18 @@ end
 
 figure('Name', 'Deblurred Image');
 imshow(D_best.xf, []);
+
+%% Save Outputs
+sweep_out = struct();
+sweep_out.p1 = p1;
+sweep_out.p2 = p2;
+sweep_out.p3 = p3;
+sweep_out.fs = fs;
+sweep_out.es = es;
+sweep_out.ts = ts;
+sweep_out.D = D_best;
+
+save(fn_out, "sweep_out");
 
 %% Delete pool
 delete(gcp('nocreate'));
