@@ -18,8 +18,8 @@ function split = mat_split(A, k)
         error("Unexpected dimension. The number of rows in matrix A must be divisible by k.");
     end
 
-    n = length(A(1, :)); % Number of Columns
-
+    n = length(A(:, 1))/k;
+    
     split = A(1:n, :); % First split
 
     for i=1:(k-1) % Get k splices, concatenate to previous slices

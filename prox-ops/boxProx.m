@@ -23,7 +23,7 @@
 
 function y = boxProx(x, l)
     % Process inputs
-    n = length(x(:, 1));
+    [m, n] = size(x);
 
     switch nargin % Process input, determine if a scaling factor is input
         case 1 % If no scaling factor is input then set l to 1
@@ -39,5 +39,5 @@ function y = boxProx(x, l)
     
     % Compute Box Prox
 
-    y = min(cat(3, max(cat(3, zeros(n), x), [], 3), l*ones(n)), [], 3);
+    y = min(cat(3, max(cat(3, zeros(m, n), x), [], 3), l*ones(m, n)), [], 3);
 end
