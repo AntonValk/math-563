@@ -23,9 +23,6 @@
 %   [2]: Aiden Gerkis' code for l1prox.m
 
 function P = l2squaredProx(x, l)
-    % Process inputs
-    n = length(x(:, 1));
-
     switch nargin % Process input, determine if a scaling factor is input
         case 1 % If no scaling factor is input then set l to 1
             l = 1;
