@@ -27,26 +27,26 @@ function p = get_default(alg, b)
     p.max_iter = 500; % Maximum number of iterations
     p.e_t = 0.1; % Error threshold
     p.e_meas = 'delta'; % Error metric to use when evaluating convergence
-    p.regularization = 'L2'; % Regularization type
+    p.regularization = 'L1'; % Regularization type
     
     % Add algorithm specific parameters
     switch alg 
         case 'primal_dr'
-            p.t = 1; % Step size
-            p.gamma = 1.5; % Gamma
-            p.rho = 0.5; % Regularization constant
+            p.t = 0.25; % Step size
+            p.gamma = 0.15; % Gamma
+            p.rho = 0.85; % Regularization constant
         case 'primaldual_dr'
-            p.t = 0.005; % Step size
-            p.gamma = 0.005; % Gamma
-            p.rho = 0.1; % Regularization constant
+            p.t = 0.5; % Step size
+            p.gamma = 0.05; % Gamma
+            p.rho = 1.5; % Regularization constant
         case 'admm'
             p.t = 1; % Step size
-            p.gamma = 1.5; % Gamma
+            p.gamma = 0.1; % Gamma
             p.rho = 0.5; % Regularization constant
         case 'chambolle_pock'
-            p.t = 1e-12; % Step size
-            p.s = 1e-12; % Step size
-            p.gamma = 0.5; % Gamma
+            p.t = 0.35; % Step size
+            p.s = 0.35; % Step size
+            p.gamma = 0.25; % Gamma
         otherwise
             error("Unrecognized algorithm specified.");
     end
