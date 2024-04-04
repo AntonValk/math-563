@@ -18,7 +18,7 @@
 %        in MATH 564 - Honours Convex Optimization.
 
 function im = imopt_scale(im_name)
-    I = rgb2gray(imread(im_name)); % Load image as black & white
+    I = im2gray(imread(im_name)); % Load image as black & white
     
     % Scale image
     I = double(I(:, :, 1));
