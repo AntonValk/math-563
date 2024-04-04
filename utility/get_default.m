@@ -28,6 +28,7 @@ function p = get_default(alg, b)
     p.e_t = 0.1; % Error threshold
     p.e_meas = 'delta'; % Error metric to use when evaluating convergence
     p.regularization = 'L1'; % Regularization type
+    p.metric = 'rmse'; % Error metric to use
     
     % Add algorithm specific parameters
     switch alg 

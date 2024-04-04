@@ -33,6 +33,12 @@
 %           regularization: The regularization type to use. May be one of
 %                            - 'L1'
 %                            - 'L2'
+%           metric: The error metric to use. May be one of
+%                            - 'rmse'
+%                            - 'psnr'
+%                            - 'varinfo'
+%           L: The number of bins for the variation of information metric. [Double]
+%              Mandatory if metric = 'varinfo'.
 %           max_iters: Maximum number of iterations. [Integer]
 %           e_t: Error threshold. [Double]
 %           verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
@@ -130,8 +136,6 @@ function varargout = imopt(b, kernel, alg, p_in)
         end
     end
     
-    %% TODO: How to handle different error metrics....
-
     if params.verbose
         disp("================Parsing Input Parameters================");
     end
@@ -139,7 +143,20 @@ function varargout = imopt(b, kernel, alg, p_in)
     f_handles = struct(); % Compile all functions into structure
 
     % Build error metric function
-    f_handles.err_eval = @(x_hat) imopt_rmse(x_true, x_hat);
+    switch params.metric
+        case 'rmse'
+            f_handles.err_eval = @(x_hat) imopt_rmse(x_true, x_hat);
+        case 'psnr'
+            f_handles.err_eval = @(x_hat) imopt_psnr(x_true, x_hat);
+        case 'varinfo'
+            if isfield(params, 'L')
+                f_handles.err_eval = @(x_hat) imopt_var_info(x_true, x_hat, params.L);
+            else
+                error("Error when calling 'imopt_var_info'. Number of bins, 'L', was not specified.");
+            end
+        otherwise
+            error("Unknown metric type specified");
+    end
 
     % Build loss function
     f_handles.f_loss = @(x)imopt_loss(x, b, params.gamma, params.regularization, kernel);

@@ -23,4 +23,4 @@ if norm(res - prev, 2) < tol
 else
     stop = false;
 end
-
+end
