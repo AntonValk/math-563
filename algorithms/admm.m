@@ -89,7 +89,7 @@ function D = admm(b, kernel, x_init, f, t, rho, g, k_max, e_t, save, verbose)
         
         % Save variables
         errors(k) = error;
-        loss(k) = f.f_loss(xk);
+        loss(k) = f.f_loss(uk); % Evaluate on uk to ensure constraints are met
 
         if save % Save images at each step only if requested
             xks(:, :, k) = xk;
@@ -110,7 +110,7 @@ function D = admm(b, kernel, x_init, f, t, rho, g, k_max, e_t, save, verbose)
     
     % Compile outputs
     D = struct();
-    D.xf = xk; % Solution
+    D.xf = boxProx(xk); % Solution. Perform additional boxProx to enforce constraints
     D.t = t_run; % Run time
     D.k_end = k-1; % Number of iterations
     D.e_end = errors(k-1); % Error at end
