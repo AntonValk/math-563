@@ -9,9 +9,9 @@ imshow(I,[])
 % Apply blur and noise
 kernel = fspecial('gaussian', [9,9], 4);
 %kernel = fspecial('motion', 50, 45);
-b = imfilter(I,kernel);
+b = imopt_blur(I,kernel);
 noiseDensity=0.1;
-b = imnoise(b, 'salt & pepper', noiseDensity); 
+b = imopt_noisify(b, 'salt & pepper', noiseDensity); 
 figure('Name','image after blurring')
 imshow(b,[]);
 
