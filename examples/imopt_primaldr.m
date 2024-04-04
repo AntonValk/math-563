@@ -26,6 +26,7 @@ params.regularization = 'L1';
 %params.gamma = 0.25; % Gamma
 %params.rho = 0.5; % Regularization constant
 params.e_t = 0.01; % Error threshold
+params.tol = 1; % Loss threshold
 params.max_iter = 150; % Maximum number of iterations
 params.verbose = true; % Print additional information about function run
 params.display = true; % Display images

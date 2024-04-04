@@ -41,6 +41,7 @@
 %              Mandatory if metric = 'varinfo'.
 %           max_iters: Maximum number of iterations. [Integer]
 %           e_t: Error threshold. [Double]
+%           tol: Loss threshold. Set to 0 to disable early stop. [Double]
 %           verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
 %           display: A boolean, indicating whether plots should be made. [Logical]
 %           save_iters: A boolean, indicating whether the image iterates should be saved. [Logical]
@@ -64,10 +65,10 @@ function varargout = imopt(b, kernel, alg, p_in)
     in_names = ["b", "kernel", "alg", "p_in"]; % List of names of inputs
     input_types = ["numeric", "numeric", "char", "struct"]; % List of allowed types for inputs
 
-    fields_allowed = ["verbose", "display", "save_iters", "max_iter", "e_t", ...
-        "e_meas", "regularization", "t", "s", "gamma", "rho"]; % List of all legal field names for the parameter structure
-    fields_type = ["logical", "logical", "logical", "numeric", "numeric", ...
-        "char", "char", "numeric", "numeric", "numeric", "numeric"]; % List of types for all fields
+    fields_allowed = ["verbose", "display", "save_iters", "max_iter", "e_t", "tol", ...
+        "metric", "L", "regularization", "t", "s", "gamma", "rho", "x_init"]; % List of all legal field names for the parameter structure
+    fields_type = ["logical", "logical", "logical", "numeric", "numeric", "numeric", ...
+        "char", "numeric", "char", "numeric", "numeric", "numeric", "numeric", "numeric"]; % List of types for all fields
     
     % Parse Outputs - Check number of outputs requested
     if nargout > 3
@@ -163,6 +164,9 @@ function varargout = imopt(b, kernel, alg, p_in)
 
     % Build generic function handle for prox of regularization function
     f_handles.prox_l = @(x, t) prox_ln(x, t, params.regularization, b);
+    
+    % Build function handle for early stop
+    f_handles.early_stop = @(cur, prev) early_stop(cur, prev, params.tol);
 
     % Build function handle for algorithm & structure to store inputs    
     switch alg
@@ -208,6 +212,7 @@ function varargout = imopt(b, kernel, alg, p_in)
         disp("  Regularization: " + params.regularization);
         disp("  Max Iterations: " + params.max_iter);
         disp("  Error Threshold: " + params.e_t);
+        disp("  Loss Delta Tolerance: " + params.tol);
     end
 
     D = deblur(b);

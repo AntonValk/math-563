@@ -12,6 +12,8 @@
 %       prox_l: A method to compute the proximal operator for the regularization term. [Function Handle]
 %       err_eval: A function evaluate the image error at the current iteration. [Function Handle]
 %       f_loss: A function that evaluates the loss function for an image. [Function Handle]
+%       early_stop: A function that evaluates the early stop condition,
+%                   based on a specified tolerance. [Function Handle]
 %   t: Step size. [Double]
 %   g: The constant modifying the iso-norm. [Double]
 %   rho: Regularization parameter. [Double]
@@ -42,7 +44,7 @@ function D = admm(b, kernel, x_init, f, t, rho, g, k_max, e_t, save, verbose)
     
     % Arrays to store outputs
     errors = zeros(1, k_max);
-    loss = zeros(1, k_max);
+    lossk = zeros(1, k_max);
     if save % Save images at each step only if requested
         xks = zeros(numRows, numCols, k_max);
     end
@@ -60,9 +62,11 @@ function D = admm(b, kernel, x_init, f, t, rho, g, k_max, e_t, save, verbose)
     
     k = 1; % Current iteration
     error = e_t*10; % Current error
-    
+    loss_old = 0; % Initilize loss to be small
+    stop = false;
+
     tic; % Start Timer
-    while error > e_t && k < k_max % Iterate until error convergence or max iterations has been exceeded
+    while error > e_t && k < k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
         % Compute inputs to prox op calculations
         atz = mat_mult(z1, 'KT', kernel) + mat_mult(z2, 'D1T', kernel) + mat_mult(z3, 'D2T', kernel); %(A^t z)
         aty = mat_mult(y1, 'KT', kernel) + mat_mult(y2, 'D1T', kernel) + mat_mult(y3, 'D2T', kernel); %(A^t y)
@@ -83,26 +87,25 @@ function D = admm(b, kernel, x_init, f, t, rho, g, k_max, e_t, save, verbose)
         z1 = z1 + t * (mat_mult(xk, 'K', kernel) - y1); % Component-wise update of zk
         z2 = z2 + t * (mat_mult(xk, 'D1', kernel) - y_aux(:,:,1));
         z3 = z3 + t * (mat_mult(xk, 'D2', kernel) - y_aux(:,:,2));
-    
-        % Update error
-        error = f.err_eval(xk);
         
-        % Save variables
-        errors(k) = error;
-        loss(k) = f.f_loss(uk); % Evaluate on uk to ensure constraints are met
+        % Update error & check early stop criteria
+        errors(k) = f.err_eval(uk);
+        lossk(k) = f.f_loss(uk);
+        stop = f.early_stop(lossk(k), loss_old);
 
         if save % Save images at each step only if requested
-            xks(:, :, k) = xk;
+            xks(:, :, k) = uk;
         end
     
         % Print status
         if verbose
             disp("Finished iteration " + num2str(k) + " with: ");
-            disp("  error: " + num2str(error));
-            disp("  loss: " + num2str(loss(k)));
+            disp("  error: " + num2str(errors(k)));
+            disp("  loss: " + num2str(lossk(k)));
         end
-    
+
         % Update iteration
+        loss_old = lossk(k);
         k = k + 1;
     end
     
@@ -115,7 +118,7 @@ function D = admm(b, kernel, x_init, f, t, rho, g, k_max, e_t, save, verbose)
     D.k_end = k-1; % Number of iterations
     D.e_end = errors(k-1); % Error at end
     D.ek = errors(1:D.k_end); % Error vs iteration
-    D.fk = loss(1:D.k_end); % Loss vs iteration
+    D.fk = lossk(1:D.k_end); % Loss vs iteration
 
     if save % Save image at each iteration vs. time if requested
         D.xk = xks(:, :, 1:D.k_end);
