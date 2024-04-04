@@ -23,7 +23,7 @@ function conv_rate(D)
     tiledlayout(1, 2);
     
     nexttile; % Plot semi-log of error
-    semilogy(iterations, e);
+    semilogy(iterations, abs(e));
     hold on;
     yline(e_t, '--r')
     title("\textbf{log($\epsilon$) vs. Iterations}");
@@ -34,7 +34,7 @@ function conv_rate(D)
     hold off;
 
     nexttile; % Plot log-log of error
-    loglog(iterations, e);
+    loglog(iterations, abs(e));
     hold on;
     yline(e_t, '--r')
     title("\textbf{log($\epsilon$) vs. log(Iterations)}");

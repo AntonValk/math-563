@@ -30,7 +30,7 @@ function loss_conv_rate(D)
     tiledlayout(1, 2);
     
     nexttile; % Plot semi-log of loss - fs
-    semilogy(iterations, f - fs);
+    semilogy(iterations, abs(f - fs));
     hold on;
     title("\textbf{log($f(x^{(k)}) - f^*$) vs. Iterations}");
     xlabel("Iteration");
@@ -39,7 +39,7 @@ function loss_conv_rate(D)
     hold off;
 
     nexttile; % Plot log-log of error
-    loglog(iterations, f - fs);
+    loglog(iterations, abs(f - fs));
     hold on;
     title("\textbf{log($f(x^{(k)}) - f^*$) vs. log(Iterations)}");
     xlabel("log(Iteration)");
