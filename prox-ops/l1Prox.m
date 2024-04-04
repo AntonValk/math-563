@@ -23,7 +23,7 @@
 
 function P = l1Prox(x, l)
     % Process inputs
-    n = length(x(:, 1));
+    [m, n] = size(x);
 
     switch nargin % Process input, determine if a scaling factor is input
         case 1 % If no scaling factor is input then set l to 1
@@ -38,5 +38,5 @@ function P = l1Prox(x, l)
     end
 
     % Compute proximal operator
-    P = sign(x).*max(cat(3, zeros(n), abs(x) - l), [], 3);
+    P = sign(x).*max(cat(3, zeros(m, n), abs(x) - l), [], 3);
 end
