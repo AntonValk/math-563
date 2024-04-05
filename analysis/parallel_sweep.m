@@ -10,40 +10,44 @@
 clear; clc; close all;
 
 %% Parameters
-n = 25; % Number of parameters to sweep in each direction
+n = 10; % Number of parameters to sweep in each direction
 k = 3; % The number of parameters to sweep, each algorithm has 3 parameters
 
-lb_1 = 1e-11; % Lower bound on parameter one
-ub_1 = 2; % Upper bound on parameter one
+% lb_1 = 1e-11; % Lower bound on parameter one
+% ub_1 = 2; % Upper bound on parameter one
+% 
+% lb_2 = 1e-11; % Lower bound on parameter two
+% ub_2 = 2; % Upper bound on parameter two
+% 
+% lb_3 = 1e-11; % Lower bound on parameter three
+% ub_3 = 2; % Upper bound on parameter three
+lb_1 = 0.444444; % Lower bound on parameter one
+ub_1 = 1.111111; % Upper bound on parameter one
 
-lb_2 = 1e-11; % Lower bound on parameter two
-ub_2 = 2; % Upper bound on parameter two
+lb_2 = 1e-15; % Lower bound on parameter two
+ub_2 = 0.1; % Upper bound on parameter two
 
-lb_3 = 1e-11; % Lower bound on parameter three
-ub_3 = 2; % Upper bound on parameter three
+lb_3 = 0.888888; % Lower bound on parameter three
+ub_3 = 1.555555; % Upper bound on parameter three
 
-fn_out = "n25-largesweep";
+fn_out = "n10-refinedsweep-admm";
 
 % Parallelization
-n_pool = 16; % Number of processes to allow. Chosen from benchmarking on a 24 core computer
-%n_pool = 8; % Number of processes to allow. Use this for your PCs! Or maybe even lower, check your system info.
+%n_pool = 16; % Number of processes to allow. Chosen from benchmarking on a 24 core computer
+n_pool = 8; % Number of processes to allow. Use this for your PCs! Or maybe even lower, check your system info.
 
 % Algorithm
-alg = 'primaldual_dr'; % Algorithm name
+alg = 'admm'; % Algorithm name
 p = struct(); % Basic parameter structure to base sweep on
 p.regularization = 'L1';
 p.verbose = false;
 p.display = false;
 p.save_iters = false;
+p.tol = 0.1;
 
 %% Blur image
 I_true = imopt_scale('cameraman.jpg'); % Import image, convert to B&W with pixels in [0,1]
-
-kernel = fspecial('gaussian', [9,9], 4); % Define blur
-b = imfilter(I_true, kernel); % Apply blur
-
-noiseDensity = 0.1; % Define noise density
-b = imnoise(b, 'salt & pepper', noiseDensity); % Apply noise
+[b, kernel] = imopt_corrupt(I_true);
 
 b = cat(3, b, I_true);
 
@@ -125,7 +129,7 @@ end
 set_plotting_parameters(1, 0); % Set text interpreter to latex
 
 % Plot loss vs t & rho with fixed gamma -> Problem sensitivity to step-sizes
-figure('Name', 'Loss vs step-size: Fixed gamma');
+figure('Name', 'Loss surface: Fixed gamma'); % As Surface
 surf(p1, p3, squeeze(fs(:, ind_best(2), :)));
 hold on;
 title("\textbf{Loss vs Step-size \& Relaxation Parameter - $\gamma$ fixed}");
@@ -136,8 +140,14 @@ grid on;
 colorbar;
 hold off;
 
+figure('Name', 'Loss heatmap: Fixed gamma'); % As heatmap
+heatmap(p1, p3, squeeze(es(:, ind_best(2), :)), 'colormap', parula, 'celllabelcolor', 'none');
+title("\textbf{Loss vs t \& $\rho$}");
+xlabel("t");
+ylabel("$\rho$");
+
 % Plot best gamma vs t & rho -> gamma sensitivity to step-size
-figure('Name', 'Best gamma vs step-size');
+figure('Name', 'Gamma surface: vs step-size');
 surf(p1, p3, gamma_best);
 hold on;
 title("\textbf{Best $\gamma$ vs Step-size \& Relaxation Parameter}");
@@ -147,6 +157,12 @@ zlabel("$\gamma_{best}$");
 grid on;
 colorbar;
 hold off;
+
+figure('Name', 'Gamma heatmap: vs step-size'); % As heatmap
+heatmap(p1, p3, gamma_best, 'colormap', parula, 'celllabelcolor', 'none');
+title("\textbf{Best $\gamma$ vs t \& $\rho$}");
+xlabel("t");
+ylabel("$\rho$");
 
 %% Print best image
 imopt_display(D_best, 'Error Evolution');
