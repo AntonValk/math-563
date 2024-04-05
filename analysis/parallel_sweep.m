@@ -13,37 +13,38 @@ clear; clc; close all;
 n = 10; % Number of parameters to sweep in each direction
 k = 3; % The number of parameters to sweep, each algorithm has 3 parameters
 
-% lb_1 = 1e-11; % Lower bound on parameter one
-% ub_1 = 2; % Upper bound on parameter one
+% lb_1 = 1e-11; % Lower bound on parameter one (t)
+% ub_1 = 5; % Upper bound on parameter one (t)
 % 
-% lb_2 = 1e-11; % Lower bound on parameter two
-% ub_2 = 2; % Upper bound on parameter two
+% lb_2 = 1e-11; % Lower bound on parameter two (gamma)
+% ub_2 = 5; % Upper bound on parameter two (gamma)
 % 
-% lb_3 = 1e-11; % Lower bound on parameter three
-% ub_3 = 2; % Upper bound on parameter three
-lb_1 = 0.444444; % Lower bound on parameter one
-ub_1 = 1.111111; % Upper bound on parameter one
+% lb_3 = 1e-11; % Lower bound on parameter three (s or rho)
+% ub_3 = 2; % Upper bound on parameter three (s or who)
+
+lb_1 = 1e-11; % Lower bound on parameter one
+ub_1 = 1; % Upper bound on parameter one
 
 lb_2 = 1e-15; % Lower bound on parameter two
-ub_2 = 0.1; % Upper bound on parameter two
+ub_2 = 2; % Upper bound on parameter two
 
-lb_3 = 0.888888; % Lower bound on parameter three
-ub_3 = 1.555555; % Upper bound on parameter three
+lb_3 = 1e-11; % Lower bound on parameter three
+ub_3 = 1; % Upper bound on parameter three
 
-fn_out = "n10-refinedsweep-admm";
+fn_out = "n10-largesweep-chambolle_pock";
 
 % Parallelization
 %n_pool = 16; % Number of processes to allow. Chosen from benchmarking on a 24 core computer
 n_pool = 8; % Number of processes to allow. Use this for your PCs! Or maybe even lower, check your system info.
 
 % Algorithm
-alg = 'admm'; % Algorithm name
+alg = 'chambolle_pock'; % Algorithm name
 p = struct(); % Basic parameter structure to base sweep on
 p.regularization = 'L1';
 p.verbose = false;
 p.display = false;
 p.save_iters = false;
-p.tol = 0.1;
+p.tol = 0.1; % Enable early stop, for the love of god, enable early stop
 
 %% Blur image
 I_true = imopt_scale('cameraman.jpg'); % Import image, convert to B&W with pixels in [0,1]
@@ -67,8 +68,8 @@ for i=1:n % Sweep values of parameter 1
             % Assign parameter values
             if isequal(alg, 'chambolle_pock') % Handle two cases with different parameter names
                 p.t = p1(i);
-                p.s = p2(j);
-                p.gamma = p3(k);
+                p.gamma = p2(j);
+                p.s = p3(k);
             else
                 p.t = p1(i);
                 p.gamma = p2(j);
@@ -94,8 +95,8 @@ for i=1:length(f_opt) % Loop through all iterates
     
     if isequal(alg, 'chambolle_pock') % Extract parameters of current run
         p1_ind = find(p1 == D_i.inputs.t);
-        p2_ind = find(p2 == D_i.inputs.s);
-        p3_ind = find(p3 == D_i.inputs.gamma);
+        p2_ind = find(p2 == D_i.inputs.gamma);
+        p3_ind = find(p3 == D_i.inputs.s);
     else
         p1_ind = find(p1 == D_i.inputs.t);
         p2_ind = find(p2 == D_i.inputs.gamma);
@@ -141,10 +142,16 @@ colorbar;
 hold off;
 
 figure('Name', 'Loss heatmap: Fixed gamma'); % As heatmap
-heatmap(p1, p3, squeeze(es(:, ind_best(2), :)), 'colormap', parula, 'celllabelcolor', 'none');
-title("\textbf{Loss vs t \& $\rho$}");
+heatmap(p1, p3, squeeze(fs(:, ind_best(2), :)), 'colormap', parula, 'celllabelcolor', 'none');
+title("Loss vs t & \rho");
 xlabel("t");
-ylabel("$\rho$");
+ylabel("\rho");
+
+figure('Name', 'Error heatmap: Fixed gamma'); % Error as heatmap
+heatmap(p1, p3, squeeze(es(:, ind_best(2), :)), 'colormap', parula, 'celllabelcolor', 'none');
+title("Error vs t & \rho");
+xlabel("t");
+ylabel("\rho");
 
 % Plot best gamma vs t & rho -> gamma sensitivity to step-size
 figure('Name', 'Gamma surface: vs step-size');
@@ -159,10 +166,10 @@ colorbar;
 hold off;
 
 figure('Name', 'Gamma heatmap: vs step-size'); % As heatmap
-heatmap(p1, p3, gamma_best, 'colormap', parula, 'celllabelcolor', 'none');
-title("\textbf{Best $\gamma$ vs t \& $\rho$}");
+h = heatmap(p1, p3, gamma_best, 'colormap', parula, 'celllabelcolor', 'none');
+title("Best \gamma vs t & \rho");
 xlabel("t");
-ylabel("$\rho$");
+ylabel("\rho");
 
 %% Print best image
 imopt_display(D_best, 'Error Evolution');
