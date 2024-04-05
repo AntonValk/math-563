@@ -66,7 +66,7 @@ function D = admm(b, kernel, x_init, f, t, rho, g, k_max, e_t, save, verbose)
     stop = false;
 
     tic; % Start Timer
-    while error > e_t && k < k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
+    while error > e_t && k <= k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
         % Compute inputs to prox op calculations
         atz = mat_mult(z1, 'KT', kernel) + mat_mult(z2, 'D1T', kernel) + mat_mult(z3, 'D2T', kernel); %(A^t z)
         aty = mat_mult(y1, 'KT', kernel) + mat_mult(y2, 'D1T', kernel) + mat_mult(y3, 'D2T', kernel); %(A^t y)

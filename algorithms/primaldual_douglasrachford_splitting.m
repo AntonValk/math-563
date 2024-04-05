@@ -58,7 +58,7 @@ function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, f, t, g, r
     stop = false;
 
     tic; % Start Timer
-    while error > e_t && k < k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
+    while error > e_t && k <= k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
         q = mat_split(qk, 3); % Convert qk to a 3D tensor
     
         % Compute Prox Ops

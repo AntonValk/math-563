@@ -59,7 +59,7 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ver
     stop = false;
 
     tic; % Start Timer
-    while error > e_t && k < k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
+    while error > e_t && k <= k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
         xk_old = xk; % Save previous xk
         
         % Compute Prox Op of sg*
