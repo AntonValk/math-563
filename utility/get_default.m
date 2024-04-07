@@ -37,9 +37,9 @@ function p = get_default(alg, b)
             p.gamma = 0.01; % Gamma
             p.rho = 1.05; % Regularization constant
         case 'primaldual_dr'
-            p.t = 0.5; % Step size
+            p.t = 1.75; % Step size
             p.gamma = 0.05; % Gamma
-            p.rho = 1.5; % Regularization constant
+            p.rho = 1.75; % Regularization constant
         case 'admm'
             p.t = 0.7407; % Step size
             p.gamma = 1e-15; % Gamma
