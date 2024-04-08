@@ -231,7 +231,7 @@ function varargout = imopt(b, kernel, alg, p_in)
     % Print outputs
     if params.verbose
         disp("Deblurring algorithm completed successfully.");
-        disp("Total Time: " + num2str(D.t) + " s");
+        disp("Total Time: " + num2str(D.t) + "s");
         disp("Total Iterations: " + num2str(D.k_end));
         disp("Final Error: " + num2str(D.e_end));
         disp("Final Loss: " + num2str(D.fk(end)));

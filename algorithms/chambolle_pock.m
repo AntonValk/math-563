@@ -25,6 +25,7 @@
 %   D: A structure containing the final image and algorithm metrics. [Struct]
 %       xf: The final image. [m x n Matrix]
 %       t: The time it took to run the optimization algorithm. [Double, Seconds]
+%       tk: The time it took to compute iteration k. [Double, Seconds]
 %       k_end: The number of iterations ran. [Integer]
 %       e_end: Error at the final iteration. [Double]
 %       ek: Error at each iteration [1 x k_end Matrix]
@@ -44,6 +45,7 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ver
     % Arrays to store outputs
     errors = zeros(1, k_max);
     lossk = zeros(1, k_max);
+    tk = zeros(1, k_max);
     if save % Save images at each step only if requested
         xks = zeros(numRows, numCols, k_max);
     end
@@ -58,8 +60,8 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ver
     loss_old = 0; % Initilize loss to be small
     stop = false;
 
-    tic; % Start Timer
     while error > e_t && k <= k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
+        tic; % Start Timer
         xk_old = xk; % Save previous xk
         
         % Compute Prox Op of sg*
@@ -85,6 +87,7 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ver
         errors(k) = f.err_eval(xk);
         lossk(k) = f.f_loss(xk);
         stop = f.early_stop(lossk(k), loss_old);
+        tk(k) = toc; % End Timer
 
         if save % Save images at each step only if requested
             xks(:, :, k) = xk;
@@ -92,7 +95,7 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ver
     
         % Print status
         if verbose
-            disp("Finished iteration " + num2str(k) + " with: ");
+            disp("Finished iteration " + num2str(k) + " in " + num2str(tk(k)) + "s with: ");
             disp("  error: " + num2str(errors(k)));
             disp("  loss: " + num2str(lossk(k)));
         end
@@ -101,14 +104,15 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ver
         loss_old = lossk(k);
         k = k + 1;
     end
-    t_run = toc; % End Timer
+    t_run = sum(tk); % Time for complete deblurring process
     
     % Compile outputs
     D = struct();
     D.xf = xk; % Solution
-    D.t = t_run; % Run time
     D.k_end = k-1; % Number of iterations
-    D.e_end = errors(k-1); % Error at end
+    D.t = t_run; % Run time
+    D.tk = tk(1:D.k_end); % Run time for each iteration
+    D.e_end = errors(D.k_end); % Error at end
     D.ek = errors(1:D.k_end); % Error vs time
     D.fk = lossk(1:D.k_end); % Loss vs iteration
 
