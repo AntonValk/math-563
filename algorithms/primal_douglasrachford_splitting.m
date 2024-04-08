@@ -53,8 +53,9 @@ function D = primal_douglasrachford_splitting(b, kernel, x_init, f, t, g, rho, k
 
     % Initialize
     z1k = x_init;
-    z2k = [mat_mult(z1k, 'K', kernel); mat_mult(z1k, 'D1', kernel); mat_mult(z1k, 'D2', kernel)];
-    
+    z2k_1 = mat_mult(z1k, 'K', kernel); % Store z2 as two parts: m x n component
+    z2k_2 = mat_mult(z1k, 'D', kernel); % Store z2 as two parts: m x n x 2 component
+
     k = 1; % Current iteration
     error = e_t*10; % Current error
     loss_old = 0; % Initilize loss to be small
@@ -62,25 +63,24 @@ function D = primal_douglasrachford_splitting(b, kernel, x_init, f, t, g, rho, k
 
     while error > e_t && k <= k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
         tic; % Start Timer
-        % Split z2k into its components
-        z2 = mat_split(z2k, 3);
 
         % Compute prox ops
         x = boxProx(z1k); % Prox of indicator
-        y1 = f.prox_l(z2(:, :, 1), t); % Prox of regularization norm
-        y2 = isoProx(z2(:, :, 2:3), t*g); % Prox of isoNorm
+        y1 = f.prox_l(z2k_1, t); % Prox of regularization norm
+        y2 = isoProx(z2k_2, t*g); % Prox of isoNorm
     
         % Compute resolvent of B
-        appK = mat_mult(2*y1 - z2(:, :, 1), 'KT', kernel); % Compute the K component of the multiplication
-        appD = mat_mult(2*y2 - z2(:, :, 2:3), 'DT', kernel); % Compute the D component of the multiplication (applyDTrans uses the concatenated form of the arrays)
+        appK = mat_mult(2*y1 - z2k_1, 'KT', kernel); % Compute the K component of the multiplication
+        appD = mat_mult(2*y2 - z2k_2, 'DT', kernel); % Compute the D component of the multiplication (applyDTrans uses the concatenated form of the arrays)
         u = mat_mult(2*x - z1k + appK + appD, 'inv', kernel, 1); % Compute the resolvent
+
+        v_1 = mat_mult(u, 'K', kernel); % Compute Au = [Ku; Du]
+        v_2 = mat_mult(u, 'D', kernel);
         
         % Compute Updates
-        v = [mat_mult(u, 'K', kernel); mat_mult(u, 'D1', kernel); mat_mult(u, 'D2', kernel)];
-        y = [y1; y2(:, :, 1); y2(:, :, 2)]; % Need to build y as a 2d matrix
-        
         z1k = z1k + rho*(u - x);
-        z2k = z2k + rho*(v - y);
+        z2k_1 = z2k_1 + rho*(v_1 - y1);
+        z2k_2 =  z2k_2 + rho*(v_2 - y2);
         
         % Update error & check early stop criteria
         errors(k) = f.err_eval(x);

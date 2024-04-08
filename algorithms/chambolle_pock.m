@@ -53,8 +53,10 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ver
     % Initialize
     xk = x_init; % n x n matrix
     zk = x_init; % n x n matrix
-    yk = mat_split([mat_mult(xk, 'K', kernel); mat_mult(xk, 'D1', kernel); mat_mult(xk, 'D2', kernel)], 3); % n x n x 3 tensor
-    
+    %yk = mat_split([mat_mult(xk, 'K', kernel); mat_mult(xk, 'D1', kernel); mat_mult(xk, 'D2', kernel)], 3); % n x n x 3 tensor
+    yk_1 = mat_mult(xk, 'K', kernel);
+    yk_2 = mat_mult(xk, 'D', kernel);
+
     k = 1; % Current iteration
     error = e_t*10; % Current error
     loss_old = 0; % Initilize loss to be small
@@ -65,18 +67,20 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ver
         xk_old = xk; % Save previous xk
         
         % Compute Prox Op of sg*
-        yk = [yk(:, :, 1); yk(:, :, 2); yk(:, :, 3)]; % Convert from 3D Tensor -> 2D
-        wk = yk + s*[mat_mult(zk, 'K', kernel); mat_mult(zk, 'D1', kernel); mat_mult(zk, 'D2', kernel)]; % Input to prox of g
-        wk = mat_split(wk, 3); % Convert from 2D -> 3D tensor
+        %yk = [yk(:, :, 1); yk(:, :, 2); yk(:, :, 3)]; % Convert from 3D Tensor -> 2D
+        wk_1 = yk_1 + s*mat_mult(zk, 'K', kernel);
+        wk_2 = yk_2 + s*mat_mult(zk, 'D', kernel);
+        %wk = yk + s*[mat_mult(zk, 'K', kernel); mat_mult(zk, 'D1', kernel); mat_mult(zk, 'D2', kernel)]; % Input to prox of g
+        %wk = mat_split(wk, 3); % Convert from 2D -> 3D tensor
         
-        yk1 = wk(:, :, 1) - s*f.prox_l(wk(:, :, 1)/s, 1/s); % Part one of prox of sg*
-        yk2 = wk(:, :, 2:3) - (s*g)*isoProx(wk(:, :, 2:3)/(s*g), 1/(s*g)); % Part two of prox of sg*
+        yk_1 = wk_1 - s*f.prox_l(wk_1/s, 1/s); % Part one of prox of sg*
+        yk_2 = wk_2 - (s*g)*isoProx(wk_2/(s*g), 1/(s*g)); % Part two of prox of sg*
     
-        yk = [yk1; yk2(:, :, 1); yk2(:, :, 2)]; % Compile components of prox of sg*
-        yk = mat_split(yk, 3); % Convert from 2D -> 3D tensor
+        %yk = [yk1; yk2(:, :, 1); yk2(:, :, 2)]; % Compile components of prox of sg*
+        %yk = mat_split(yk, 3); % Convert from 2D -> 3D tensor
 
         % Compute Prox Op of tf
-        vk = xk - t*(mat_mult(yk(:, :, 1), 'KT', kernel) + mat_mult(yk(:, :, 2), 'D1T', kernel) + mat_mult(yk(:, :, 3), 'D2T', kernel)); % Input to prox of f
+        vk = xk - t*(mat_mult(yk_1, 'KT', kernel) + mat_mult(yk_2, 'DT', kernel)); % Input to prox of f
         
         xk = boxProx(vk); % Prox of tf
        

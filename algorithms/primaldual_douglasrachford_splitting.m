@@ -52,8 +52,9 @@ function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, f, t, g, r
     
     % Initialize
     pk = x_init; % n x n matrix
-    qk = [mat_mult(pk, 'K', kernel); mat_mult(pk, 'D1', kernel); mat_mult(pk, 'D2', kernel)]; % 3n x n matrix
-    
+    qk_1 = mat_mult(pk, 'K', kernel); % Store qk as two components: m x n component
+    qk_2 = cat(3, mat_mult(pk, 'D1', kernel), mat_mult(pk, 'D2', kernel)); % Store qk as two components: m x n x 2 component
+
     k = 1; % Current iteration
     error = e_t*10; % Current error
     loss_old = 0; % Initilize loss to be small
@@ -61,31 +62,28 @@ function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, f, t, g, r
 
     while error > e_t && k <= k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
         tic; % Start Timer
-        q = mat_split(qk, 3); % Convert qk to a 3D tensor
     
         % Compute Prox Ops
-        xk = boxProx(pk);   %x is n by n matrix
+        xk = boxProx(pk); % Prox_tf
         
-        z1 = q(:, :, 1) - t*f.prox_l(q(:, :, 1)/t, 1/t); % Part 1 of prox_sg*
-        z2 = q(:, :, 2:3) - (t*g)*isoProx(q(:, :, 2:3)/(t*g), 1/(t*g)); % Part 2 of prox_sg*
-        zk = [z1; z2(:, :, 1); z2(:, :, 2)]; % Compile prox_sg*
+        z1 = qk_1 - t*f.prox_l(qk_1/t, 1/t); % Part 1 of prox_sg*
+        z2 = qk_2 - (t*g)*isoProx(qk_2/(t*g), 1/(t*g)); % Part 2 of prox_sg*
     
         % Compute Resolvent of B (pg 7 in reference)
-        vec0  =[2*xk - pk; 2*z1 - q(:,:,1); 2*z2(:,:,1) - q(:,:,2); 2*z2(:,:,2) - q(:,:,3)];
-        vec = mat_split(vec0, 4); % Extract matrices corresponding to n x n blocks
-    
-        a = (vec(:, :, 1)) - t*mat_mult(vec(:, :, 2), 'KT', kernel) - t*mat_mult(vec(:, :, 3), 'D1T', kernel) - t*mat_mult(vec(:, :, 4), 'D2T', kernel); % [I, -tA']*vec
+        vec_1 = 2*xk - pk; % m x n
+        vec_2 = 2*z1 - qk_1; % m x n
+        vec_3 = 2*z2 - qk_2; % m x n x 2
+
+        a = (vec_1) - t*mat_mult(vec_2, 'KT', kernel) - t*mat_mult(vec_3, 'DT', kernel); % [I, -tA']*vec
         b = mat_mult(a, 'inv', kernel, t); % (I + t^2A^TA)^-1 * [I, -tA']*vec
-        c = [eye(numRows)*b; t*mat_mult(b, 'K', kernel); t*mat_mult(b, 'D1', kernel); t*mat_mult(b, 'D2', kernel)]; % [I; tA]*(I + t^2A^TA)^-1 * [I, -tA']*vec
-    
-        res = [zeros(numRows,numCols); vec(:, :, 2); vec(:, :, 3); vec(:, :, 4)] + c;
-    
-        wk = res(1:numRows, :); % In n x n
-        vk = res((numRows + 1):end, :); % In 3n x n
+        wk = eye(numRows)*b; % [0, 0; 0, I]*vec + [I; tA]*(I + t^2A^TA)^-1 * [I, -tA']*vec [m x n]
+        vk_1 = vec_2 + t*mat_mult(b, 'K', kernel); % [0, 0; 0, I]*vec + [I; tA]*(I + t^2A^TA)^-1 * [I, -tA']*vec [m x n]
+        vk_2 = vec_3 + t*mat_mult(b, 'D', kernel); % [0, 0; 0, I]*vec + [I; tA]*(I + t^2A^TA)^-1 * [I, -tA']*vec [m x n x 2]
     
         % Perform update
         pk = pk + rho*(wk - xk); % n x n matrix
-        qk = qk + rho*(vk - zk); % 3n x n matrix
+        qk_1 = qk_1 + rho*(vk_1 - z1);
+        qk_2 = qk_2 + rho*(vk_2 - z2);
         
         % Update error & check early stop criteria
         errors(k) = f.err_eval(xk);

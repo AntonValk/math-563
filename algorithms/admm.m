@@ -55,12 +55,10 @@ function D = admm(b, kernel, x_init, f, t, rho, g, k_max, e_t, save, verbose)
     xk = x_init; % m x n matrix
     uk = x_init; % m x n matrix
     wk = x_init; % m x n matrix
-    y1 = mat_mult(xk, 'K', kernel);  % 3m x n matrix
-    y2 = mat_mult(xk, 'D1', kernel); % 3m x n matrix
-    y3 = mat_mult(xk, 'D2', kernel); % 3m x n matrix
-    z1 = mat_mult(xk, 'K', kernel); % 3m x n matrix
-    z2 = mat_mult(xk, 'D1', kernel); % 3m x n matrix
-    z3 = mat_mult(xk, 'D2', kernel); % 3m x n matrix
+    y1 = mat_mult(xk, 'K', kernel); % m x n matrix
+    y2 = mat_mult(xk, 'D', kernel); % m x n x 2 matrix
+    z1 = mat_mult(xk, 'K', kernel); % m x n matrix
+    z2 = mat_mult(xk, 'D', kernel); % m x n x 2 matrix
     
     k = 1; % Current iteration
     error = e_t*10; % Current error
@@ -70,25 +68,23 @@ function D = admm(b, kernel, x_init, f, t, rho, g, k_max, e_t, save, verbose)
     while error > e_t && k <= k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
         tic; % Start Timer
         % Compute inputs to prox op calculations
-        atz = mat_mult(z1, 'KT', kernel) + mat_mult(z2, 'D1T', kernel) + mat_mult(z3, 'D2T', kernel); %(A^t z)
-        aty = mat_mult(y1, 'KT', kernel) + mat_mult(y2, 'D1T', kernel) + mat_mult(y3, 'D2T', kernel); %(A^t y)
-        xk = mat_mult(uk + aty - (1/t)*(wk + atz), 'inv', kernel, 1); % 
+        atz = mat_mult(z1, 'KT', kernel) + mat_mult(z2, 'DT', kernel); %(A^t z)
+        aty = mat_mult(y1, 'KT', kernel) + mat_mult(y2, 'DT', kernel); %(A^t y)
+        xk = mat_mult(uk + aty - (1/t)*(wk + atz), 'inv', kernel, 1); % Update image
 
-        ax = mat_split([mat_mult(xk, 'K', kernel); mat_mult(xk, 'D1', kernel); mat_mult(xk, 'D2', kernel)], 3); % Compute Ax and convert 2D -> 3D
-        yk = mat_split([y1; y2; y3], 3); % Convert 2D -> 3D
-        zk = mat_split([z1; z2; z3], 3); % Convert 2D -> 3D
+        ax_1 = mat_mult(xk, 'K', kernel); % Compute Ax - m x n
+        ax_2 = mat_mult(xk, 'D', kernel); % Compute Ax - m x n x 2
 
         % Compute prox ops
         uk = boxProx(rho*xk + (1-rho)*uk + wk/t); % Prox of f/t
         
-        y1 = f.prox_l(rho*ax(:,:,1) + (1-rho)*y1 + z1/t, 1/t); % Part 1 of prox g/t
-        y_aux = isoProx(rho*ax(:,:,2:3) + (1-rho)*yk(:,:,2:3) + zk(:,:,2:3)/t, g/t); % Part 2 of prox g/t
+        y1 = f.prox_l(rho*ax_1 + (1-rho)*y1 + z1/t, 1/t); % Part 1 of prox g/t
+        y_aux = isoProx(rho*ax_2 + (1-rho)*y2 + z2/t, g/t); % Part 2 of prox g/t
     
         % Compute Updates
         wk = wk + t*(xk-uk);
-        z1 = z1 + t * (mat_mult(xk, 'K', kernel) - y1); % Component-wise update of zk
-        z2 = z2 + t * (mat_mult(xk, 'D1', kernel) - y_aux(:,:,1));
-        z3 = z3 + t * (mat_mult(xk, 'D2', kernel) - y_aux(:,:,2));
+        z1 = z1 + t * (mat_mult(xk, 'K', kernel) - y1); % Component-wise update of zk - m x n
+        z2 = z2 + t * (mat_mult(xk, 'D', kernel) - y_aux); % Component-wise update of zk - m x n x 2
         
         % Update error & check early stop criteria
         errors(k) = f.err_eval(uk);
