@@ -46,6 +46,8 @@
 %           display: A boolean, indicating whether plots should be made. [Logical]
 %           save_iters: A boolean, indicating whether the image iterates should be saved. [Logical]
 %           ns: The step size at which to save image iterates. [Integer]
+%           im_name: The name of the image, to be used when saving results. [String]
+%           dir: The directory to save the image. [String]
 %
 % Outputs:
 %   xf: The final image, after deblurring. [m x n Matrix]
@@ -257,6 +259,13 @@ function varargout = imopt(b, kernel, alg, p_in)
         end
     end
     
+    % Save resulting image
+    if ~exists(params.dir) % Ensure directory exists
+        mkdir(params.dir)
+    end
+
+    imwrite(D.xf, params.dir + "\" + params.im_name + "_deblurred.png");
+
     varargout = cell(1, nargout);
 
     switch nargout % Create outputs and return

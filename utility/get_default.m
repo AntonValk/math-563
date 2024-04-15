@@ -52,4 +52,8 @@ function p = get_default(alg, b)
         otherwise
             error("Unrecognized algorithm specified.");
     end
+
+    % Parameters for saving image
+    p.im_name = ""; % Name of the image
+    p.dir = convertCharsToStrings(pwd); % Default path is current folder
 end

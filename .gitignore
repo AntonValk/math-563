@@ -1,3 +1,4 @@
 *.asv
 test1.m
 test_imopt.m
+outputs/
