@@ -70,9 +70,9 @@ function varargout = imopt(b, kernel, alg, p_in)
     inputs = containers.Map(in_names, input_types); % Hashmap of all allowable inputs & types
 
     fields_allowed = ["verbose", "display", "save_iters", "ns", "max_iter", "e_t", "tol", ...
-        "metric", "L", "regularization", "t", "s", "gamma", "rho", "x_init"]; % List of all legal field names for the parameter structure
+        "metric", "L", "regularization", "t", "s", "gamma", "rho", "x_init", "im_name", "dir"]; % List of all legal field names for the parameter structure
     fields_types = ["logical", "logical", "numeric", "numeric", "numeric", "numeric", "numeric", ...
-        "char", "numeric", "char", "numeric", "numeric", "numeric", "numeric", "numeric"]; % List of types for all fields
+        "char", "numeric", "char", "numeric", "numeric", "numeric", "numeric", "numeric", "string", "string"]; % List of types for all fields
     fields_types = containers.Map(fields_allowed, fields_types); % Hashmap of all allowable parameters & types
 
     % Parse Outputs - Check number of outputs requested
