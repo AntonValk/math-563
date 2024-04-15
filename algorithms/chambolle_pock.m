@@ -18,8 +18,11 @@
 %   g: The constant modifying the iso-norm in the problem statement. [Double]
 %   k_max: Maximum number of iterations. [Integer]
 %   e_t: Error threshold. [Double]
-%   save: A boolean, indicating whether the image iterates should be saved. [Logical]
-%   verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
+%   save: Indicates the level of saving for image iterates: [Integer]
+%           0 - No image saving.
+%           1 - Save images at every iterate. (WARNING: Takes lots of memory, prone to crashes)
+%           2 - Sparse image saving. (Save image at every 20th Iteration)
+%   ns: The step size at which to save image iterates. [Integer]%   verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
 %
 % Outputs:
 %   D: A structure containing the final image and algorithm metrics. [Struct]
@@ -39,21 +42,44 @@
 %   [1]: C. Paquette, "MATH 463/563 - Convex Optimization, Project Description" 
 %        in MATH 564 - Honours Convex Optimization.
 
-function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, verbose)
+function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ns, verbose)
     [numRows, numCols]=size(b);
     
+    % Get system information
+    m = memory;
+    mem_max = m.MaxPossibleArrayBytes;
+    max_arr = mem_max/8; % Size of largest possible array (of double)
+
     % Arrays to store outputs
     errors = zeros(1, k_max);
     lossk = zeros(1, k_max);
     tk = zeros(1, k_max);
-    if save % Save images at each step only if requested
-        xks = zeros(numRows, numCols, k_max);
+    switch save % Save images at each step only if requested
+        case 0 % Do nothing, no data saved
+        case 1 % Full save
+            if numRows*numCols*k_max > max_arr
+                error("Cannot save image iterates, not enough memory available.");
+            elseif numRows*numCols*k_max*0.8 > max_arr
+                warning("Image iterate array is large, will result in poor memory performance.");
+            end
+
+            xks = zeros(numRows, numCols, k_max); % Create image iterate array if possible
+        case 2 % Sparse save
+            if numRows*numCols*k_max/ns > max_arr
+                error("Cannot save image iterates, not enough memory available.");
+            elseif numRows*numCols*(k_max/ns)*0.8 > max_arr
+                warning("Image iterate array is large, will result in poor memory performance.");
+            end
+
+            idx = 1; % Tracks location in the xks array
+            xks = zeros(numRows, numCols, floor(k_max/ns));
+        otherwise
+            error("Error in function inputs: Invalid value of 'save' passed.");
     end
     
     % Initialize
     xk = x_init; % n x n matrix
     zk = x_init; % n x n matrix
-    %yk = mat_split([mat_mult(xk, 'K', kernel); mat_mult(xk, 'D1', kernel); mat_mult(xk, 'D2', kernel)], 3); % n x n x 3 tensor
     yk_1 = mat_mult(xk, 'K', kernel);
     yk_2 = mat_mult(xk, 'D', kernel);
 
@@ -67,17 +93,11 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ver
         xk_old = xk; % Save previous xk
         
         % Compute Prox Op of sg*
-        %yk = [yk(:, :, 1); yk(:, :, 2); yk(:, :, 3)]; % Convert from 3D Tensor -> 2D
         wk_1 = yk_1 + s*mat_mult(zk, 'K', kernel);
         wk_2 = yk_2 + s*mat_mult(zk, 'D', kernel);
-        %wk = yk + s*[mat_mult(zk, 'K', kernel); mat_mult(zk, 'D1', kernel); mat_mult(zk, 'D2', kernel)]; % Input to prox of g
-        %wk = mat_split(wk, 3); % Convert from 2D -> 3D tensor
         
         yk_1 = wk_1 - s*f.prox_l(wk_1/s, 1/s); % Part one of prox of sg*
         yk_2 = wk_2 - (s*g)*isoProx(wk_2/(s*g), 1/(s*g)); % Part two of prox of sg*
-    
-        %yk = [yk1; yk2(:, :, 1); yk2(:, :, 2)]; % Compile components of prox of sg*
-        %yk = mat_split(yk, 3); % Convert from 2D -> 3D tensor
 
         % Compute Prox Op of tf
         vk = xk - t*(mat_mult(yk_1, 'KT', kernel) + mat_mult(yk_2, 'DT', kernel)); % Input to prox of f
@@ -93,8 +113,14 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ver
         stop = f.early_stop(lossk(k), loss_old);
         tk(k) = toc; % End Timer
 
-        if save % Save images at each step only if requested
-            xks(:, :, k) = xk;
+        switch save
+            case 1 % Save images at each step
+                xks(:, :, k) = xk;
+            case 2 % Save images every ns steps
+                if mod(k - 1, 20) == 0 % k - 1 ensures the first iterate is saved
+                    xks(:, :, idx) = xk;
+                    idx = idx + 1;
+                end
         end
     
         % Print status
@@ -107,6 +133,7 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ver
         % Update iteration
         loss_old = lossk(k);
         k = k + 1;
+        memory_check; % Check memory usage, should never be an issue!
     end
     t_run = sum(tk); % Time for complete deblurring process
     
@@ -120,7 +147,10 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ver
     D.ek = errors(1:D.k_end); % Error vs time
     D.fk = lossk(1:D.k_end); % Loss vs iteration
 
-    if save % Save image at each iteration vs. time if requested
-        D.xk = xks(:, :, 1:D.k_end);
+    switch save % Save image at each iteration vs. time if requested
+        case 1
+            D.xk = xks(:, :, 1:D.k_end);
+        case 2
+            D.xk = xks(:, :, 1:floor(D.k_end/ns));
     end
 end

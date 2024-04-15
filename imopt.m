@@ -45,6 +45,7 @@
 %           verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
 %           display: A boolean, indicating whether plots should be made. [Logical]
 %           save_iters: A boolean, indicating whether the image iterates should be saved. [Logical]
+%           ns: The step size at which to save image iterates. [Integer]
 %
 % Outputs:
 %   xf: The final image, after deblurring. [m x n Matrix]
@@ -64,12 +65,14 @@
 function varargout = imopt(b, kernel, alg, p_in)
     in_names = ["b", "kernel", "alg", "p_in"]; % List of names of inputs
     input_types = ["numeric", "numeric", "char", "struct"]; % List of allowed types for inputs
+    inputs = containers.Map(in_names, input_types); % Hashmap of all allowable inputs & types
 
-    fields_allowed = ["verbose", "display", "save_iters", "max_iter", "e_t", "tol", ...
+    fields_allowed = ["verbose", "display", "save_iters", "ns", "max_iter", "e_t", "tol", ...
         "metric", "L", "regularization", "t", "s", "gamma", "rho", "x_init"]; % List of all legal field names for the parameter structure
-    fields_type = ["logical", "logical", "logical", "numeric", "numeric", "numeric", ...
+    fields_types = ["logical", "logical", "numeric", "numeric", "numeric", "numeric", "numeric", ...
         "char", "numeric", "char", "numeric", "numeric", "numeric", "numeric", "numeric"]; % List of types for all fields
-    
+    fields_types = containers.Map(fields_allowed, fields_types); % Hashmap of all allowable parameters & types
+
     % Parse Outputs - Check number of outputs requested
     if nargout > 3
         error("Too many outputs requested.");
@@ -123,12 +126,12 @@ function varargout = imopt(b, kernel, alg, p_in)
         names = fieldnames(p_in);
 
         for i=1:length(names) % Overwrite defaults if a legal field was passed
-            if ismember(names{i}, fields_allowed) % Check if parameter name is correct
-                if isa(p_in.(names{i}), fields_type(fields_allowed == names{i})) % Check if parameter type is correct
+            if isKey(fields_types, names{i}) % Check if parameter name is correct
+                if isa(p_in.(names{i}), fields_types(names{i})) % Check if parameter type is correct
                     params.(names{i}) = p_in.(names{i});
                 else
                     error("Unexpected type for parameter '" + names{i} + ...
-                        "'. Expected a " + fields_type(fields_allowed == names{i}) + ...
+                        "'. Expected a " + fields_types(names{i}) + ...
                         " but got a " + class(p_in.(names{i})));
                 end
             else
@@ -171,28 +174,28 @@ function varargout = imopt(b, kernel, alg, p_in)
     % Build function handle for algorithm & structure to store inputs    
     switch alg
         case 'primal_dr'
-            deblur = @(im)primal_douglasrachford_splitting(im, kernel, params.x_init, f_handles, params.t, params.gamma, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
+            deblur = @(im)primal_douglasrachford_splitting(im, kernel, params.x_init, f_handles, params.t, params.gamma, params.rho, params.max_iter, params.e_t, params.save_iters, params.ns, params.verbose);
             
             % Compile parameters for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Primal Douglas-Rachford Splitting";
         case 'primaldual_dr'
-            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.x_init, f_handles, params.t, params.gamma, params.rho, params.max_iter, params.e_t, params.save_iters, params.verbose);
+            deblur = @(im)primaldual_douglasrachford_splitting(im, kernel, params.x_init, f_handles, params.t, params.gamma, params.rho, params.max_iter, params.e_t, params.save_iters, params.ns, params.verbose);
 
             % Compile parameters for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Primal-Dual Douglas-Rachford Splitting";
         case 'admm'
-            deblur = @(im)admm(im, kernel, params.x_init, f_handles, params.t, params.rho, params.gamma, params.max_iter, params.e_t, params.save_iters, params.verbose);
+            deblur = @(im)admm(im, kernel, params.x_init, f_handles, params.t, params.rho, params.gamma, params.max_iter, params.e_t, params.save_iters, params.ns, params.verbose);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);
             p_vals(2) = "rho: " + num2str(params.rho);
             alg_name = "Alternating Direction Method of Multipliers";
         case 'chambolle_pock'
-            deblur = @(im)chambolle_pock(im, kernel, params.x_init, f_handles, params.t, params.s, params.gamma, params.max_iter, params.e_t, params.save_iters, params.verbose);
+            deblur = @(im)chambolle_pock(im, kernel, params.x_init, f_handles, params.t, params.s, params.gamma, params.max_iter, params.e_t, params.save_iters, params.ns, params.verbose);
             
             % Compile outputs for verbose mode
             p_vals(1) = "t: " + num2str(params.t);

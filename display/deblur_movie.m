@@ -18,8 +18,19 @@ function M = deblur_movie(D)
     % Extract vectors to plot
     xk = D.xk;
     fk = D.fk;
+    ns = 1;
+
+    if D.inputs.save_iters == 2 % Trim loss vector if sparse save was used
+        N = linspace(1, length(fk), length(fk));
+        fk = fk(mod(N-1, D.inputs.ns) == 0);
+        ns = D.inputs.ns;
+    end
     
     iterations = linspace(1, length(fk), length(fk));
+    
+    figure('visible', 'off'); % Get y-limits to use when plotting loss vs. iterations
+    loglog(iterations(1:length(fk)).*ns, fk, 'LineWidth', 2);
+    yl = ylim;
 
     % Make plots
     for i=1:length(fk) % For each iteration
@@ -28,12 +39,12 @@ function M = deblur_movie(D)
 
         nexttile(1, [2, 2]); % Plot image - Span a 2x2 grid
         imshow(xk(:, :, i), []);
-        title("\textbf{Image at Iteration " + num2str(i) + "}");
+        title("\textbf{Image at Iteration " + num2str(i*ns) + "}");
         
         nexttile(5, [1, 2]); % Plot error - Span a 1x2 grid
-        semilogy(iterations(1:i), fk(1:i), 'LineWidth', 2);
-        xlim([0, iterations(end)]);
-        ylim([1, max(fk)]);
+        loglog(iterations(1:i).*ns, fk(1:i), 'LineWidth', 2);
+        xlim([0, iterations(length(fk)).*ns]);
+        ylim(yl);
         title("\textbf{Loss vs. Iteration}");
         xlabel("Iteration");
         ylabel("Loss");

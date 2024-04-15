@@ -18,8 +18,11 @@
 %   rho: Regularization parameter. [Double]
 %   k_max: Maximum number of iterations. [Integer]
 %   e_t: Error threshold. [Double]
-%   save: A boolean, indicating whether the image iterates should be saved. [Logical]
-%   verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
+%   save: Indicates the level of saving for image iterates: [Integer]
+%           0 - No image saving.
+%           1 - Save images at every iterate. (WARNING: Takes lots of memory, prone to crashes)
+%           2 - Sparse image saving. (Save image at every 20th Iteration)
+%   ns: The step size at which to save image iterates. [Integer]%   verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
 %
 % Outputs:
 %   D: A structure containing the final image and algorithm metrics. [Struct]
@@ -39,15 +42,39 @@
 %   [1]: C. Paquette, "MATH 463/563 - Convex Optimization, Project Description" 
 %        in MATH 564 - Honours Convex Optimization.
 
-function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, f, t, g, rho, k_max, e_t, save, verbose)
+function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, f, t, g, rho, k_max, e_t, save, ns, verbose)
     [numRows, numCols]=size(b);
     
+    % Get system information
+    m = memory;
+    mem_max = m.MaxPossibleArrayBytes;
+    max_arr = mem_max/8; % Size of largest possible array (of double)
+
     % Arrays to store outputs
     errors = zeros(1, k_max);
     lossk = zeros(1, k_max);
     tk = zeros(1, k_max);
-    if save % Save images at each step only if requested
-        xks = zeros(numRows, numCols, k_max);
+    switch save % Save images at each step only if requested
+        case 0 % Do nothing, no data saved
+        case 1 % Full save
+            if numRows*numCols*k_max > max_arr
+                error("Cannot save image iterates, not enough memory available.");
+            elseif numRows*numCols*k_max*0.8 > max_arr
+                warning("Image iterate array is large, will result in poor memory performance.");
+            end
+
+            xks = zeros(numRows, numCols, k_max); % Create image iterate array if possible
+        case 2 % Sparse save
+            if numRows*numCols*k_max/ns > max_arr
+                error("Cannot save image iterates, not enough memory available.");
+            elseif numRows*numCols*(k_max/ns)*0.8 > max_arr
+                warning("Image iterate array is large, will result in poor memory performance.");
+            end
+
+            idx = 1; % Tracks location in the xks array
+            xks = zeros(numRows, numCols, floor(k_max/ns));
+        otherwise
+            error("Error in function inputs: Invalid value of 'save' passed.");
     end
     
     % Initialize
@@ -56,11 +83,11 @@ function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, f, t, g, r
     qk_2 = cat(3, mat_mult(pk, 'D1', kernel), mat_mult(pk, 'D2', kernel)); % Store qk as two components: m x n x 2 component
 
     k = 1; % Current iteration
-    error = e_t*10; % Current error
+    err = e_t*10; % Current error
     loss_old = 0; % Initilize loss to be small
     stop = false;
 
-    while error > e_t && k <= k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
+    while err > e_t && k <= k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
         tic; % Start Timer
     
         % Compute Prox Ops
@@ -91,8 +118,14 @@ function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, f, t, g, r
         stop = f.early_stop(lossk(k), loss_old);
         tk(k) = toc; % End Timer
 
-        if save % Save images at each step only if requested
-            xks(:, :, k) = xk;
+        switch save
+            case 1 % Save images at each step
+                xks(:, :, k) = xk;
+            case 2 % Save images every ns steps
+                if mod(k - 1, 20) == 0 % k - 1 ensures the first iterate is saved
+                    xks(:, :, idx) = xk;
+                    idx = idx + 1;
+                end
         end
     
         % Print status
@@ -105,6 +138,7 @@ function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, f, t, g, r
         % Update iteration
         loss_old = lossk(k);
         k = k + 1;
+        memory_check; % Check memory usage, should never be an issue!
     end
     t_run = sum(tk); % Time for complete deblurring process
     
@@ -118,7 +152,10 @@ function  D = primaldual_douglasrachford_splitting(b, kernel, x_init, f, t, g, r
     D.ek = errors(1:D.k_end); % Error vs time
     D.fk = lossk(1:D.k_end); % Loss vs iteration
 
-    if save % Save image at each iteration vs. time if requested
-        D.xk = xks(:, :, 1:D.k_end);
+    switch save % Save image at each iteration vs. time if requested
+        case 1
+            D.xk = xks(:, :, 1:D.k_end);
+        case 2
+            D.xk = xks(:, :, 1:floor(D.k_end/ns));
     end
 end
