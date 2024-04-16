@@ -67,7 +67,6 @@
 function varargout = imopt(b, kernel, alg, p_in)
     in_names = ["b", "kernel", "alg", "p_in"]; % List of names of inputs
     input_types = ["numeric", "numeric", "char", "struct"]; % List of allowed types for inputs
-    inputs = containers.Map(in_names, input_types); % Hashmap of all allowable inputs & types
 
     fields_allowed = ["verbose", "display", "save_iters", "ns", "max_iter", "e_t", "tol", ...
         "metric", "L", "regularization", "t", "s", "gamma", "rho", "x_init", "im_name", "dir"]; % List of all legal field names for the parameter structure
@@ -124,7 +123,7 @@ function varargout = imopt(b, kernel, alg, p_in)
     % Evaluate input parameter structure
     params = get_default(alg, b);
 
-    if exist('p_in') % If custom parameters were passed overwrite default values
+    if exist('p_in', 'var') % If custom parameters were passed overwrite default values
         names = fieldnames(p_in);
 
         for i=1:length(names) % Overwrite defaults if a legal field was passed
@@ -227,7 +226,7 @@ function varargout = imopt(b, kernel, alg, p_in)
     % Compile outputs
     D.inputs = params;
     D.inputs.b = b;
-    if exist('x_true')
+    if exist('x_true', 'var')
         D.inputs.x_true = x_true;
     end
     D.inputs.alg_name = alg_name;
@@ -260,7 +259,7 @@ function varargout = imopt(b, kernel, alg, p_in)
     end
     
     % Save resulting image
-    if ~exists(params.dir) % Ensure directory exists
+    if ~isfolder(params.dir) % Ensure directory exists
         mkdir(params.dir)
     end
 
