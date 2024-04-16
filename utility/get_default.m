@@ -44,7 +44,7 @@ function p = get_default(alg, b)
         case 'admm'
             p.t = 0.7407; % Step size
             p.gamma = 1e-15; % Gamma
-            p.rho = 1.34815; % Regularization constant
+            p.rho = 1.4815;%1.34815; % Regularization constant
         case 'chambolle_pock'
             p.t = 0.1; % Step size
             p.s = 0.4072; % Step size
