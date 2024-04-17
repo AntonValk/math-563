@@ -21,10 +21,7 @@
 
 
 function e = imopt_rmse(x, x_hat)
-%ERRORS Summary of this function goes here
-%   Detailed explanation goes here
-[N, ~] = size(x);
-[~, M] = size(x);
-e = sqrt(1/(N*M)*sum((x - x_hat).^2, 'all'));
+    [N, M] = size(x);
+    e = sqrt(1/(N*M)*sum((x - x_hat).^2, 'all'));
 end
 

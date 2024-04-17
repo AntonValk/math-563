@@ -21,7 +21,7 @@
 
 
 function e = imopt_psnr(x, x_hat)
-%ERRORS Summary of this function goes here
-mse = 1/(N*M)*sum((x - x_hat).^2, 'all');
-e = -1 * log(mse);
+    [N, M] = size(x);
+    mse = 1/(N*M)*sum((x - x_hat).^2, 'all');
+    e = -1 * log(mse);
 end
