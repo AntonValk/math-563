@@ -1,4 +1,7 @@
 *.asv
+*.png
+*.jpg
+*.tiff
 test1.m
 test_imopt.m
 outputs/
