@@ -23,5 +23,5 @@
 function e = imopt_psnr(x, x_hat)
     [N, M] = size(x);
     mse = 1/(N*M)*sum((x - x_hat).^2, 'all');
-    e = -1 * log(mse);
+    e = 10 * log(mse);
 end
