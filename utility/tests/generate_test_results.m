@@ -1,3 +1,12 @@
+% generate_test_results.m
+%
+% Generate the 'true' results on which to test the IMOPT install.
+%
+% Author: Aidan Gerkis
+% Date: 19-04-2024
+
+clc; clear;
+
 x = imopt_scale('cameraman.jpg', 256);
 b = imopt_corrupt(x);
 
@@ -88,4 +97,4 @@ admm_res = admm(b, kernel, x_init, fadmm, admmt, admmg, admmrho, k_max, e_t, 0, 
 cp_res = chambolle_pock(b, kernel, x_init, fcp, cpt, cps, cpg, k_max, e_t, 0, 0, 0);
 
 % IMOPT Package tests
-im_clean = imopt(cat(3, b, x), kernel);
+im_clean = imopt(b, kernel);

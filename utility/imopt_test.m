@@ -1,5 +1,12 @@
 function imopt_test()
-    
+    % imopt_test.m
+    %
+    % Tests important functions in IMOPT, ensuring functions execute successfully
+    % and checking results to ensure they are correct.
+    %
+    % Author: Aidan Gerkis
+    % Date: 19-04-2024
+
     [t, in] = imopt_get_true; % Get true test results
     
     % Status variables

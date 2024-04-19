@@ -1,4 +1,13 @@
 function [true, inputs] = imopt_get_true()
+    % imopt_get_true.m
+    %
+    % Returns the expected correct values to use when testing the IMOPT
+    % package. True results are stored in the test_results.m &
+    % test_results.mat files.
+    %
+    % Author: Aidan Gerkis
+    % Date: 19-04-2024
+    
     % Load true results
     test_results;
     % Initiate Outputs

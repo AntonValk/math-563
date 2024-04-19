@@ -19,6 +19,7 @@ function stop = early_stop(res, prev, tol)
     %        in MATH 564 - Honours Convex Optimization.
     
     if norm(res - prev, 2) < tol % Check condition based on input tolerance
+        
         stop = true;
     else
         stop = false;
