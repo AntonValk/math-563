@@ -8,18 +8,16 @@
 
 clear; clc; close all;
 
-I = imopt_scale('cameraman.jpg'); % Convert to B&W on the range [0, 1]
+I_original = imopt_scale('cameraman.jpg'); % Convert to B&W on the range [0, 1]
 figure('Name','image before blurring')
-imshow(I,[])
+imshow(I_original,[])
 
 % Apply blur and noise
-[b, kernel] = imopt_corrupt(I); 
+[I_blurred, kernel] = imopt_corrupt(I_original); 
 figure('Name','image after blurring')
-imshow(b,[]);
+imshow(I_blurred,[]);
 
-im_in = cat(3, b, I); % Concatenate with true image
-
-[im_clean, ~, D] = imopt(im_in, kernel); % Deblur image
+I_deblurred = imopt(I_blurred, kernel); % Deblur image
 
 figure('Name', "Image after de-blurring"); % Plot deblurred image
-imshow(im_clean, []);
+imshow(I_deblurred, []);

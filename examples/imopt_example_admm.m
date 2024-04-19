@@ -1,6 +1,7 @@
-% imopt_example_primaldr.m
+% imopt_example_admm.m
 %
-% An example showing how to use Primal Douglas-Rachford to deblur an image.
+% An example showing how to use ADMM to deblur an image.
+
 clear; clc; close all;
 
 I_original = imopt_scale('cameraman.jpg'); % Convert to B&W on the range [0, 1]
@@ -15,9 +16,9 @@ imshow(I_blurred,[]);
 % Create parameter structure
 p = struct();
 p.regularization = 'L1'; % Select between L1 & L2 regularization
-p.t = 0.35; % Define custom step size
+p.t = 0.7; % Define custom step size
 p.rho = 0.5; % Define custom regularization constant
-p.gamma = 0.25; % Define custom gamma
+p.gamma = 0.001; % Define custom gamma
 p.e_t = 0.01; % Set early stop based on error threshold
 p.tol = 1; % Set early stop based on loss
 p.max_iter = 50; % Sets maximum number of iterations
@@ -26,7 +27,7 @@ p.display = true; % Display images summarizing algorithm performance
 p.save_iters = 1; % Save all iterates at each algorithm step
 p.x_true = I_original; % True image
 
-I_deblurred = imopt(I_blurred, kernel, 'primal_dr', p); % Deblur image
+I_deblurred = imopt(I_blurred, kernel, 'admm', p); % Deblur image
 
 figure('Name', "Image after de-blurring"); % Show deblurred image
 imshow(I_deblurred, []);
