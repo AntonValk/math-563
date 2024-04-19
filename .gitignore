@@ -4,5 +4,4 @@
 *.tiff
 test1.m
 test_imopt.m
-outputs/
 generate_test_results.m
