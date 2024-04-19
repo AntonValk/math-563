@@ -163,4 +163,8 @@ function D = admm(b, kernel, x_init, f, t, rho, g, k_max, e_t, save, ns, verbose
         case 2
             D.xk = xks(:, :, 1:floor(D.k_end/ns));
     end
+
+    if D.k_end < k_max && verbose % Communicate early stop
+        fprintf("Early stop at iteration %d.\n", D.k_end);
+    end
 end
