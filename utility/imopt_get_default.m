@@ -1,28 +1,29 @@
-% get_default.m
-%
-% Returns the default parameter settings for the specified algorithm.
-%
-% Inputs:
-%   alg: The algorithm for which to return the default parameters. [String]
-%
-% Outputs:
-%   p: The parameter structure
-%
-% Author: Aidan Gerkis
-% Date: 31-3-2024
-
-function p = get_default(alg, b)
+function p = imopt_get_default(alg, b)
+    % get_default.m
+    %
+    % Returns the default parameter settings for the specified algorithm.
+    %
+    % Inputs:
+    %   alg: The algorithm for which to return the default parameters. [String]
+    %
+    % Outputs:
+    %   p: The parameter structure
+    %
+    % Author: Aidan Gerkis
+    % Date: 31-3-2024
+    
     p = struct(); % Initialize
     
     % Output Parameters
     p.verbose = false; % Verbose mode disabled
+    p.silent = false; % Silent mode disabled
     p.display = true; % Display plots of convergence
     p.save_iters = 0; % Disable saving of all iterates
     p.ns = 20; % Step-size at which to save iterates if sparse save is used
-
-    % Initial Starting Point - 0 by default
+  
     [nr, nc] = size(b);
-    p.x_init = zeros(nr, nc);
+    p.x_init = zeros(nr, nc); % Initial Starting Point - 0 by default
+    p.x_true = NaN(nr, nc); % The true image, all NaNs indicates it was not passed
 
     % Add global algorithm parameters
     p.max_iter = 500; % Maximum number of iterations

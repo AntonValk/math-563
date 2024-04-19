@@ -1,19 +1,19 @@
-% prox_tg.m
-%
-%
-% Inputs:
-%   x: The point at which to evaluate the prox. [n x n x 3 Tensor]
-%   t: The scaling constant. [Double]
-%   g: Gamma constant in Iso Norm. [Double]
-%   reg: The type of regularization to use. [Character String]
-%   b: The shift in the regularization. [n x n Matrix]
-%
-% Outputs:
-%   z: The proximal operator of tg at x. [n x n x 3 Tensor]
-%      (:, :, 1) corresponds to the regularization prox.
-%      (:, :, 2:3) corresponds to the iso-norm prox.
-
 function z = prox_tg(x, t, g, reg, b)
+    % prox_tg.m
+    %
+    %
+    % Inputs:
+    %   x: The point at which to evaluate the prox. [n x n x 3 Tensor]
+    %   t: The scaling constant. [Double]
+    %   g: Gamma constant in Iso Norm. [Double]
+    %   reg: The type of regularization to use. [Character String]
+    %   b: The shift in the regularization. [n x n Matrix]
+    %
+    % Outputs:
+    %   z: The proximal operator of tg at x. [n x n x 3 Tensor]
+    %      (:, :, 1) corresponds to the regularization prox.
+    %      (:, :, 2:3) corresponds to the iso-norm prox.
+    
     z = zeros(length(x(1, :, 1)), length(x(1, :, 1)), 3); % Initialize array to store output
 
     % Compute prox of regularization operator

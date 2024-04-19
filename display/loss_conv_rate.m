@@ -1,20 +1,20 @@
-% loss_conv_rate.m
-%
-% Plots convergence rate of algorithm, based on the loss, versus iterations.
-% Requires that the optimal point is given in D.inputs. If it is not then
-% D.xf is used.
-%
-% Inputs:
-%   D: The output structure of an imopt optimization. [struct]
-%
-% Author: Aidan Gerkis
-% Date: 03-04-2024
-
 function loss_conv_rate(D)
+    % loss_conv_rate.m
+    %
+    % Plots convergence rate of algorithm, based on the loss, versus iterations.
+    % Requires that the optimal point is given in D.inputs. If it is not then
+    % D.xf is used.
+    %
+    % Inputs:
+    %   D: The output structure of an imopt optimization. [struct]
+    %
+    % Author: Aidan Gerkis
+    % Date: 03-04-2024
+    
     % Extract vectors to plot
     f = D.fk;
 
-    if isfield(D.inputs, 'x_true') % If true image was passed
+    if ~anynan(D.inputs.x_true) % If true image was passed
         fs = imopt_loss(D.inputs.x_true, D.inputs.b, D.inputs.gamma, D.inputs.regularization, D.inputs.kernel);
     else % Use final output as the "true" image
         fs = imopt_loss(D.xf, D.inputs.b, D.inputs.gamma, D.inputs.regularization, D.inputs.kernel);

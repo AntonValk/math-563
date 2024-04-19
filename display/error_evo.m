@@ -1,14 +1,14 @@
-% error_evo.m
-%
-% Plots error versus iterations.
-%
-% Inputs:
-%   D: The output structure of an imopt optimization. [struct]
-%
-% Author: Aidan Gerkis
-% Date: 01-04-2024
-
 function error_evo(D)
+    % error_evo.m
+    %
+    % Plots error versus iterations.
+    %
+    % Inputs:
+    %   D: The output structure of an imopt optimization. [struct]
+    %
+    % Author: Aidan Gerkis
+    % Date: 01-04-2024
+
     % Extract vectors to plot
     e = D.ek;
     e_t = D.e_end;

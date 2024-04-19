@@ -13,32 +13,32 @@ clear; clc; close all;
 n = 10; % Number of parameters to sweep in each direction
 k = 3; % The number of parameters to sweep, each algorithm has 3 parameters
 
-% lb_1 = 1e-11; % Lower bound on parameter one (t)
-% ub_1 = 5; % Upper bound on parameter one (t)
+lb_1 = 1.25; % Lower bound on parameter one (t)
+ub_1 = 2; % Upper bound on parameter one (t)
+
+lb_2 = 1e-15; % Lower bound on parameter two (gamma)
+ub_2 = 0.5; % Upper bound on parameter two (gamma)
+
+lb_3 = 1.5; % Lower bound on parameter three (s or rho)
+ub_3 = 2.25; % Upper bound on parameter three (s or rho)
+
+% lb_1 = 1e-11; % Lower bound on parameter one
+% ub_1 = 1; % Upper bound on parameter one
 % 
-% lb_2 = 1e-11; % Lower bound on parameter two (gamma)
-% ub_2 = 5; % Upper bound on parameter two (gamma)
+% lb_2 = 1e-15; % Lower bound on parameter two
+% ub_2 = 2; % Upper bound on parameter two
 % 
-% lb_3 = 1e-11; % Lower bound on parameter three (s or rho)
-% ub_3 = 2; % Upper bound on parameter three (s or who)
+% lb_3 = 1e-11; % Lower bound on parameter three
+% ub_3 = 1; % Upper bound on parameter three
 
-lb_1 = 1e-11; % Lower bound on parameter one
-ub_1 = 1; % Upper bound on parameter one
-
-lb_2 = 1e-15; % Lower bound on parameter two
-ub_2 = 2; % Upper bound on parameter two
-
-lb_3 = 1e-11; % Lower bound on parameter three
-ub_3 = 1; % Upper bound on parameter three
-
-fn_out = "n10-largesweep-chambolle_pock";
+fn_out = "n10-refinedsweep-primaldual_dr";
 
 % Parallelization
 %n_pool = 16; % Number of processes to allow. Chosen from benchmarking on a 24 core computer
 n_pool = 8; % Number of processes to allow. Use this for your PCs! Or maybe even lower, check your system info.
 
 % Algorithm
-alg = 'chambolle_pock'; % Algorithm name
+alg = 'primaldual_dr'; % Algorithm name
 p = struct(); % Basic parameter structure to base sweep on
 p.regularization = 'L1';
 p.verbose = false;
@@ -61,10 +61,11 @@ p3 = linspace(lb_3, ub_3, n); % Values for parameter 3
 myPool = parpool(n_pool); % Initialize parallel environments
 idx = 1; % Index parallel calls
 
-% Initialize parallel calls
-for i=1:n % Sweep values of parameter 1
-    for j=1:n % Sweep values of parameter 2
-        for k=1:n % Sweep values of parameter 3
+% Initialize parallel calls, loop backwards so all memory is allocated at
+% first step
+for i=n:-1:1 % Sweep values of parameter 1
+    for j=n:-1:1 % Sweep values of parameter 2
+        for k=n:-1:1 % Sweep values of parameter 3
             % Assign parameter values
             if isequal(alg, 'chambolle_pock') % Handle two cases with different parameter names
                 p.t = p1(i);

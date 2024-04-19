@@ -1,16 +1,16 @@
-% memory_check.m
-%
-% Checks memory usage, displaying a warning below a certain level, and
-% exitting if the memory usage is too high.
-%
-% Inputs:
-%   c1: The percentage of total memory used after which to display a warning.
-%   c2: The percentage of total memory used after which to throw an error.
-%
-% Author: Aidan Gerkis
-% Date: 15-04-2024
-
 function memory_check(c1, c2)
+    % memory_check.m
+    %
+    % Checks memory usage, displaying a warning below a certain level, and
+    % exitting if the memory usage is too high.
+    %
+    % Inputs:
+    %   c1: The percentage of total memory used after which to display a warning.
+    %   c2: The percentage of total memory used after which to throw an error.
+    %
+    % Author: Aidan Gerkis
+    % Date: 15-04-2024
+    
     switch nargin
         case 0 % No arguments needed
             c1 = 0.8; % Percent of memory after which to display a warning

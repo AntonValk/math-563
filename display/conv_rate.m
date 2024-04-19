@@ -1,14 +1,14 @@
-% conv_rate.m
-%
-% Plots convergence rate of algorithm, based on the error metric, versus iterations.
-%
-% Inputs:
-%   D: The output structure of an imopt optimization. [struct]
-%
-% Author: Aidan Gerkis
-% Date: 01-04-2024
-
 function conv_rate(D)
+    % conv_rate.m
+    %
+    % Plots convergence rate of algorithm, based on the error metric, versus iterations.
+    %
+    % Inputs:
+    %   D: The output structure of an imopt optimization. [struct]
+    %
+    % Author: Aidan Gerkis
+    % Date: 01-04-2024
+    
     % Extract vectors to plot
     e = D.ek;
     e_t = D.e_end;

@@ -1,48 +1,47 @@
-% chambolle_pock.m
-%
-% Implements non-blind image deblurring using the chambolle-pock
-% method, as described in [1]. Stops when a specified error threshold is
-% met or when a maximum number of iterations have been carried out.
-%
-% Inputs:
-%   b: The blurred image. [m x n Matrix]
-%   kernel: The kernel used to blur the image. [k x k Matrix]
-%   x_init: The initial guess for the deblurred image. [m x n Matrix]
-%   f: A structure containing several function handles:
-%       prox_l: A method to compute the proximal operator for the regularization term. [Function Handle]
-%       err_eval: A function evaluate the image error at the current iteration. [Function Handle]
-%       f_loss: A function that evaluates the loss function for an image. [Function Handle]%   t: Step size. [Double]
-%       early_stop: A function that evaluates the early stop condition,
-%                   based on a specified tolerance. [Function Handle]
-%   s: Step size. [Double]
-%   g: The constant modifying the iso-norm in the problem statement. [Double]
-%   k_max: Maximum number of iterations. [Integer]
-%   e_t: Error threshold. [Double]
-%   save: Indicates the level of saving for image iterates: [Integer]
-%           0 - No image saving.
-%           1 - Save images at every iterate. (WARNING: Takes lots of memory, prone to crashes)
-%           2 - Sparse image saving. (Save image at every 20th Iteration)
-%   ns: The step size at which to save image iterates. [Integer]%   verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
-%
-% Outputs:
-%   D: A structure containing the final image and algorithm metrics. [Struct]
-%       xf: The final image. [m x n Matrix]
-%       t: The time it took to run the optimization algorithm. [Double, Seconds]
-%       tk: The time it took to compute iteration k. [Double, Seconds]
-%       k_end: The number of iterations ran. [Integer]
-%       e_end: Error at the final iteration. [Double]
-%       ek: Error at each iteration [1 x k_end Matrix]
-%       fk: Loss at each iteration [1 x k_end Matrix]
-%       xk: The image at each iteration [m x n x k_end Matrix] (Only output if save is true)
-%
-% Authors: Linda Hu, Cheng Shou, April Niu, Aidan Gerkis
-% Date: 23-03-2024
-%
-% References:
-%   [1]: C. Paquette, "MATH 463/563 - Convex Optimization, Project Description" 
-%        in MATH 564 - Honours Convex Optimization.
-
 function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ns, verbose)
+    % chambolle_pock.m
+    %
+    % Implements non-blind image deblurring using the chambolle-pock
+    % method, as described in [1]. Stops when a specified error threshold is
+    % met or when a maximum number of iterations have been carried out.
+    %
+    % Inputs:
+    %   b: The blurred image. [m x n Matrix]
+    %   kernel: The kernel used to blur the image. [k x k Matrix]
+    %   x_init: The initial guess for the deblurred image. [m x n Matrix]
+    %   f: A structure containing several function handles:
+    %       prox_l: A method to compute the proximal operator for the regularization term. [Function Handle]
+    %       err_eval: A function evaluate the image error at the current iteration. [Function Handle]
+    %       f_loss: A function that evaluates the loss function for an image. [Function Handle]%   t: Step size. [Double]
+    %       early_stop: A function that evaluates the early stop condition,
+    %                   based on a specified tolerance. [Function Handle]
+    %   s: Step size. [Double]
+    %   g: The constant modifying the iso-norm in the problem statement. [Double]
+    %   k_max: Maximum number of iterations. [Integer]
+    %   e_t: Error threshold. [Double]
+    %   save: Indicates the level of saving for image iterates: [Integer]
+    %           0 - No image saving.
+    %           1 - Save images at every iterate. (WARNING: Takes lots of memory, prone to crashes)
+    %           2 - Sparse image saving. (Save image at every 20th Iteration)
+    %   ns: The step size at which to save image iterates. [Integer]%   verbose: A boolean, indicating whether verbose outputs should be printed. [Logical]
+    %
+    % Outputs:
+    %   D: A structure containing the final image and algorithm metrics. [Struct]
+    %       xf: The final image. [m x n Matrix]
+    %       t: The time it took to run the optimization algorithm. [Double, Seconds]
+    %       tk: The time it took to compute iteration k. [Double, Seconds]
+    %       k_end: The number of iterations ran. [Integer]
+    %       e_end: Error at the final iteration. Only output if the true image is passed. [Double]
+    %       ek: Error at each iteration. Only output if the true image is passed. [1 x k_end Matrix]
+    %       fk: Loss at each iteration [1 x k_end Matrix]
+    %       xk: The image at each iteration [m x n x k_end Matrix] (Only output if save is true)
+    %
+    % Authors: Linda Hu, Cheng Shou, April Niu, Aidan Gerkis
+    % Date: 23-03-2024
+    %
+    % References:
+    %   [1]: C. Paquette, "MATH 463/563 - Convex Optimization, Project Description" 
+    %        in MATH 564 - Honours Convex Optimization.
     [numRows, numCols]=size(b);
     
     % Get system information
@@ -84,11 +83,11 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ns,
     yk_2 = mat_mult(xk, 'D', kernel);
 
     k = 1; % Current iteration
-    error = e_t*10; % Current error
+    err = e_t*10; % Current error
     loss_old = 0; % Initilize loss to be small
     stop = false;
 
-    while error > e_t && k <= k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
+    while err > e_t && k <= k_max && ~stop % Iterate until error convergence or max iterations has been exceeded
         tic; % Start Timer
         xk_old = xk; % Save previous xk
         
@@ -126,7 +125,9 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ns,
         % Print status
         if verbose
             disp("Finished iteration " + num2str(k) + " in " + num2str(tk(k)) + "s with: ");
-            disp("  error: " + num2str(errors(k)));
+            if ~isnan(errors(k)) % Display error if ground truth was passed
+                disp("  error: " + num2str(errors(k)));
+            end
             disp("  loss: " + num2str(lossk(k)));
         end
 
@@ -143,8 +144,10 @@ function D = chambolle_pock(b, kernel, x_init, f, t, s, g, k_max, e_t, save, ns,
     D.k_end = k-1; % Number of iterations
     D.t = t_run; % Run time
     D.tk = tk(1:D.k_end); % Run time for each iteration
-    D.e_end = errors(D.k_end); % Error at end
-    D.ek = errors(1:D.k_end); % Error vs time
+    if ~anynan(errors) % If true image was passed
+        D.e_end = errors(D.k_end); % Error at end
+        D.ek = errors(1:D.k_end); % Error vs time
+    end
     D.fk = lossk(1:D.k_end); % Loss vs iteration
 
     switch save % Save image at each iteration vs. time if requested

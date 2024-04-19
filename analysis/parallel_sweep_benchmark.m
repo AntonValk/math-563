@@ -1,25 +1,24 @@
-% parallel_sweep_benchmark.m
-%
-% A version of parallel_sweep that computes the simulation time and total
-% speed-up, for use in benchmarking the performance of the
-% parallelization. Requires that the parallel computing toolbox be
-% installed.
-%
-% Inputs:
-%   n_pool: The number of processes to allow. [Integer]
-%
-% Outputs:
-%   sim_time: The total time to run all simulations in parallel. [Seconds]
-%   speed_up: The ratio of sim time to compute time. [Unitless]
-%   bytes_tf: The total number of bytes transferred. [GB]
-%
-% Author: Aidan Gerkis
-% Date: 02-04-2024
-
 function [sim_time, speed_up, bytes_tf] = parallel_sweep_benchmark(n_pool)
+    % parallel_sweep_benchmark.m
+    %
+    % A version of parallel_sweep that computes the simulation time and total
+    % speed-up, for use in benchmarking the performance of the
+    % parallelization. Requires that the parallel computing toolbox be
+    % installed.
+    %
+    % Inputs:
+    %   n_pool: The number of processes to allow. [Integer]
+    %
+    % Outputs:
+    %   sim_time: The total time to run all simulations in parallel. [Seconds]
+    %   speed_up: The ratio of sim time to compute time. [Unitless]
+    %   bytes_tf: The total number of bytes transferred. [GB]
+    %
+    % Author: Aidan Gerkis
+    % Date: 02-04-2024
+    
     %% Parameters
     n = 5; % Number of parameters to sweep in each direction
-    k = 3; % The number of parameters to sweep, each algorithm has 3 parameters
     
     lb_1 = 1e-11; % Lower bound on parameter one
     ub_1 = 2; % Upper bound on parameter one
@@ -58,12 +57,13 @@ function [sim_time, speed_up, bytes_tf] = parallel_sweep_benchmark(n_pool)
     myPool = parpool(n_pool); % Initialize parallel environments
     idx = 1; % Index parallel calls
     
-    % Initialize parallel calls
+    % Initialize parallel calls, loop backwards so all memory is allocated at
+    % first step
     tic;
     ticBytes(myPool); % Start counting bytes
-    for i=1:n % Sweep values of parameter 1
-        for j=1:n % Sweep values of parameter 2
-            for k=1:n % Sweep values of parameter 3
+    for i=n:-1:1 % Sweep values of parameter 1
+        for j=n:-1:1 % Sweep values of parameter 2
+            for k=n:-1:1 % Sweep values of parameter 3
                 % Assign parameter values
                 if isequal(alg, 'chambolle_pock') % Handle two cases with different parameter names
                     p.t = p1(i);

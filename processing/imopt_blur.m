@@ -1,33 +1,33 @@
-% imopt_blur.m
-%
-% Blurs an image using padding to remove rough edges that arise when
-% post-processing the image. Enforces 'convolution' as the filtering
-% method.
-%
-% Inputs:
-%   im: The image to blur. [m x n Matrix]
-%   kernel: The kernel to use when applying blur. [k x k Matrix] (Optional)
-%   padding: The padding type to use. May be one of: (Optional)
-%               - 'symmetric'
-%               - 'replicate'
-%               - 'circular'
-%
-% Outputs:
-%   b: The blurred image. [m x n Matrix]
-%
-% Usage:
-%   b = imopt_blur(im); % Blurs the input image with a 9x9 gaussian kernel
-%                         of sigma = 4. Uses replicate padding.
-%   b = imopt_blur(im, my_kernel); % Blurs the input image with kernel
-%                                    'my_kernel' and replicate padding.
-%   b = imopt_blur(im, my_kernel, my_padding); % Blurs the input image with
-%                                                kernel 'my_kernel' and
-%                                                padding 'my_padding'.
-%
-% Author(s): Aidan Gerkis
-% Date: 04-04-2024
-
 function b = imopt_blur(im, kernel, padding)
+    % imopt_blur.m
+    %
+    % Blurs an image using padding to remove rough edges that arise when
+    % post-processing the image. Enforces 'convolution' as the filtering
+    % method.
+    %
+    % Inputs:
+    %   im: The image to blur. [m x n Matrix]
+    %   kernel: The kernel to use when applying blur. [k x k Matrix] (Optional)
+    %   padding: The padding type to use. May be one of: (Optional)
+    %               - 'symmetric'
+    %               - 'replicate'
+    %               - 'circular'
+    %
+    % Outputs:
+    %   b: The blurred image. [m x n Matrix]
+    %
+    % Usage:
+    %   b = imopt_blur(im); % Blurs the input image with a 9x9 gaussian kernel
+    %                         of sigma = 4. Uses replicate padding.
+    %   b = imopt_blur(im, my_kernel); % Blurs the input image with kernel
+    %                                    'my_kernel' and replicate padding.
+    %   b = imopt_blur(im, my_kernel, my_padding); % Blurs the input image with
+    %                                                kernel 'my_kernel' and
+    %                                                padding 'my_padding'.
+    %
+    % Author(s): Aidan Gerkis
+    % Date: 04-04-2024
+    
     % Arrays of allowed input values
     in_names = ["im", "kernel", "padding"];
     in_types = ["numeric", "numeric", "char"];

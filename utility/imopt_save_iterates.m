@@ -1,18 +1,18 @@
-% imopt_save_iterates.m
-% 
-% Saves the image iterates from each algorithm iteration as pngs in the
-% specified directory and with the specified filename. Only works if the
-% image iterates were aved in the algorithm call.
-%
-% Inputs:
-%   D: The output structure of an imopt call. [Structure]
-%   dir: The directory to save the image. [String] (Optional)
-%   name: The name to save the image under.[String] (Optional)
-%
-% Author: Aidan Gerkis
-% Date: 15-04-2025
-
 function imopt_save_iterates(D, dir, name)
+    % imopt_save_iterates.m
+    % 
+    % Saves the image iterates from each algorithm iteration as pngs in the
+    % specified directory and with the specified filename. Only works if the
+    % image iterates were aved in the algorithm call.
+    %
+    % Inputs:
+    %   D: The output structure of an imopt call. [Structure]
+    %   dir: The directory to save the image. [String] (Optional)
+    %   name: The name to save the image under.[String] (Optional)
+    %
+    % Author: Aidan Gerkis
+    % Date: 15-04-2025
+    
     input_names = ["D", "dir", "name"];
     input_types = ["struct", "string", "string"];
 

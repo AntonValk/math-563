@@ -1,22 +1,22 @@
-% mat_mult.m
-%
-% A function wrapper that calls the matrix multiplication code written by
-% Courtney Paquette and distributed as part of the assignment.
-%
-% Inputs:
-%   x: The matrix to multiply. [matrix or tensor, depending on desired operation]
-%   A: The multiplication to perform. [char array]
-%   K: The image kernel. [matrix]
-%   t: A constant to scale the matrix multiplication, only needed for
-%      computing the inverse. [Double]
-%
-% Outputs:
-%   Ax: The results of the matrix multiplication. [matrix or tensor, depending on desired operation]
-%
-% Author(s): Aidan Gerkis
-% Date: 01-04-2024
-
 function Ax = mat_mult(x, A, K, t)
+    % mat_mult.m
+    %
+    % A function wrapper that calls the matrix multiplication code written by
+    % Courtney Paquette and distributed as part of the assignment.
+    %
+    % Inputs:
+    %   x: The matrix to multiply. [matrix or tensor, depending on desired operation]
+    %   A: The multiplication to perform. [char array]
+    %   K: The image kernel. [matrix]
+    %   t: A constant to scale the matrix multiplication, only needed for
+    %      computing the inverse. [Double]
+    %
+    % Outputs:
+    %   Ax: The results of the matrix multiplication. [matrix or tensor, depending on desired operation]
+    %
+    % Author(s): Aidan Gerkis
+    % Date: 01-04-2024
+    
     % Preliminaries - Computing eigenvalues
     [numRows, numCols]=size(x);
 

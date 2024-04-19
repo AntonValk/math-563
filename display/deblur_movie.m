@@ -1,17 +1,17 @@
-% deblur_movie.m
-%
-% Makes and outputs a movie of the deblurring progression versus iteration.
-%
-% Inputs:
-%   D: The output structure of an imopt optimization.
-%
-% Outputs:
-%   M: The movie structure of the deblurring progress versus iteration. [struct]
-%
-% Author: Aidan Gerkis
-% Date: 01-04-2024
-
 function M = deblur_movie(D)
+    % deblur_movie.m
+    %
+    % Makes and outputs a movie of the deblurring progression versus iteration.
+    %
+    % Inputs:
+    %   D: The output structure of an imopt optimization.
+    %
+    % Outputs:
+    %   M: The movie structure of the deblurring progress versus iteration. [struct]
+    %
+    % Author: Aidan Gerkis
+    % Date: 01-04-2024
+    
     % Set plotting parameters
     set_plotting_parameters(1, 0); % Only set text to latex
 
@@ -33,7 +33,7 @@ function M = deblur_movie(D)
     yl = ylim;
 
     % Make plots
-    for i=1:length(fk) % For each iteration
+    for i=length(fk):-1:1 % For each iteration. Loop backwards for better memory allocation
         F = figure('visible', 'off');
         tiledlayout(3, 2);
 
@@ -52,6 +52,7 @@ function M = deblur_movie(D)
 
         M(i) = getframe(F); % Capture figure as a movie frame
     end
-
+    
+    flip(M); % Need to flip M as it was constructed in reverse order
     reset(groot); % Reset ploting parameters
 end    

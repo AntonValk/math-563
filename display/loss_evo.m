@@ -1,14 +1,13 @@
-% loss_evo.m
-%
-% Plots loss versus iterations.
-%
-% Inputs:
-%   D: The output structure of an imopt optimization. [struct]
-%
-% Author: Aidan Gerkis
-% Date: 03-04-2024
-
 function loss_evo(D)
+    % loss_evo.m
+    %
+    % Plots loss versus iterations.
+    %
+    % Inputs:
+    %   D: The output structure of an imopt optimization. [struct]
+    %
+    % Author: Aidan Gerkis
+    % Date: 03-04-2024
     % Extract vectors to plot
     f = D.fk;
 
